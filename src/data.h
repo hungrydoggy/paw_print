@@ -29,8 +29,8 @@ public:
         return *((DataType*)p);
     }
 
-
-    virtual ~Data() {}
+    Data (unsigned char *start);
+    virtual ~Data () {}
 
     inline DataType type () {
         return type(start_);
@@ -79,6 +79,8 @@ public:
 class SequenceData : public Data {
 public:
     int dataSize (PawPrint *paw_print) override;
+
+    Data* get (PawPrint *paw_print, int idx);
 };
 
 class KeyValuePairData : public Data {
@@ -98,6 +100,8 @@ public:
 class MapData : public Data {
 public:    
     int dataSize (PawPrint *paw_print) override;
+
+    Data* get (PawPrint *paw_print, const char *key);
 };
 
 
