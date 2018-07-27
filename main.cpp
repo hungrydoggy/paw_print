@@ -1,15 +1,17 @@
-//#define _TEST
-#if defined(_TEST)
 
 #include <assert.h>
 #include <iostream>
+#include <stdio.h>
 
 #include "./src/paw_print.h"
 
 
 using namespace paw_print;
 
-int main () {
+using std::cout;
+using std::endl;
+
+static void _t_basic () {
     PawPrint pp;
 
     /*
@@ -145,7 +147,67 @@ int main () {
 	assert(root["abc"]["f"][0]["first"]["value"].get(-1) == 1);
 	assert(strcmp(root["abc"]["f"][1]["second"]["name"].get(""), "second") == 0);
 	assert(root["abc"]["f"][1]["second"]["value"].get(-1) == 2);
+}
 
+void _t_load_boss_appear_snake_obj () {
+    PawPrint paw;
+
+    FILE* f = fopen("../paw/boss_appear_snake.obj", "r");
+
+    fseek(f, 0, SEEK_END);
+    size_t size = ftell(f);
+
+    char* text = new char[size];
+
+    rewind(f);
+    fread(text, sizeof(char), size, f);
+
+
+    vector<Token> tokens;
+    paw.tokenize(text, tokens);
+    vector<string> results = {
+        "Token(STRING, 1, 33, indent:0)        @objects/ui/popup/boss_appear.obj",
+        "Token(COLON, 35, 35, indent:0)        :",
+        "Token(STRING, 41, 43, indent:4)        ref",
+        "Token(COLON, 44, 44, indent:4)        :",
+        "Token(STRING, 55, 62, indent:8)        boss_img",
+        "Token(COLON, 64, 64, indent:8)        :",
+        "Token(STRING, 67, 95, indent:12)        images/ui/popup/snake_art.png",
+        "Token(STRING, 107, 114, indent:8)        icon_img",
+        "Token(COLON, 116, 116, indent:8)        :",
+        "Token(STRING, 119, 164, indent:12)        images/status/icons/inven_ico_snake_poison.png",
+        "Token(STRING, 176, 183, indent:8)        icon_siz",
+        "Token(COLON, 185, 185, indent:8)        :",
+        "Token(SQUARE_OPEN, 187, 187, indent:12)        [",
+        "Token(INT, 188, 189, indent:12)        79",
+        "Token(COMMA, 190, 190, indent:12)        ,",
+        "Token(INT, 192, 192, indent:12)        0",
+        "Token(SQUARE_CLOSE, 193, 193, indent:12)        ]",
+        "Token(STRING, 204, 211, indent:8)        icon_pos",
+        "Token(COLON, 213, 213, indent:8)        :",
+        "Token(DASH, 227, 227, indent:12)        -",
+        "Token(INT, 229, 229, indent:12)        0",
+        "Token(DASH, 243, 243, indent:12)        -",
+        "Token(DOUBLE, 245, 248, indent:12)        10.5",
+        "Token(DASH, 262, 262, indent:12)        -",
+        "Token(INT, 264, 264, indent:12)        1",
+    };
+    assert(tokens.size() == results.size());
+
+    for (int ti=0; ti<tokens.size(); ++ti) {
+        auto s = tokens[ti].toString(text);
+        assert(s == results[ti]);
+    }
+    
+
+    paw.loadText(text);
+
+
+    delete[] text;
+}
+
+int main () {
+    _t_basic();
+    _t_load_boss_appear_snake_obj();
     return 0;
 }
-#endif

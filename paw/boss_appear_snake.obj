@@ -1,0 +1,9 @@
+'@objects/ui/popup/boss_appear.obj':
+    ref:
+        'boss_img': 'images/ui/popup/snake_art.png'
+        'icon_img': 'images/status/icons/inven_ico_snake_poison.png'
+        'icon_siz': [79, 0]
+        'icon_pos':
+            - 0
+            - 10.5
+            - 1

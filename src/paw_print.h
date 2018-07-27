@@ -3,12 +3,16 @@
 
 #include <unordered_map>
 #include <vector>
+#include <stack>
 #include <string>
+
+#include "token.h"
 
 
 namespace paw_print {
 
 
+using std::stack;
 using std::string;
 using std::unordered_map;
 using std::vector;
@@ -84,6 +88,11 @@ public:
     int dataSize (int idx) const;
 
 
+    bool tokenize (const char *text, vector<Token> &tokens);
+    bool parse (const char *text, const vector<Token> &tokens);
+    bool loadText (const char *text);
+
+
     // write
     void pushInt    (int    value); 
     void pushDouble (double value); 
@@ -124,7 +133,12 @@ private:
     mutable unordered_map<int, vector<int>> data_idxs_of_map_map_;
     bool is_closed_;
 
+    stack<int> curly_open_idx_stack_;
+    stack<int> square_open_idx_stack_;
 
+
+    // return next idx
+    int _parse_step (const char *text, const vector<Token> &tokens, int start_idx);
 };
 
 template<> bool PawPrint::Cursor::is<int        > () const;
