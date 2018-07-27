@@ -134,8 +134,6 @@ int main () {
 	assert(root["abc"]["e"]["x"].get(-1.0) == 9.0);
 	assert(root["abc"]["e"]["y"].get(-1.0) == 8.0);
 	assert(root["abc"]["e"]["z"].get(-1.0) == 7.0);
-    std::cout << (int)root["abc"]["f"].type() << std::endl;
-    exit(0);
 	assert(root["abc"]["f"].type() == Data::TYPE_SEQUENCE);
 	assert(root["abc"]["f"][0].type() == Data::TYPE_MAP);
 	assert(root["abc"]["f"][0]["first"].type() == Data::TYPE_MAP);
@@ -143,8 +141,8 @@ int main () {
 	assert(root["abc"]["f"][0]["first"]["value"].type() == Data::TYPE_INT);
 	assert(strcmp(root["abc"]["f"][0]["first"]["name"].get(""), "first") == 0);
 	assert(root["abc"]["f"][0]["first"]["value"].get(-1) == 1);
-	assert(strcmp(root["abc"]["f"][0]["second"]["name"].get(""), "second") == 0);
-	assert(root["abc"]["f"][0]["second"]["value"].get(-1) == 2);
+	assert(strcmp(root["abc"]["f"][1]["second"]["name"].get(""), "second") == 0);
+	assert(root["abc"]["f"][1]["second"]["value"].get(-1) == 2);
 
     return 0;
 }

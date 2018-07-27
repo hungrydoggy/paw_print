@@ -55,11 +55,17 @@ int PawPrint::dataSize (int idx) const {
             result += sizeof(Data::StrSizeType) + sizeof(const char) * getStrSize(idx);
             break;
 
-        case Data::TYPE_SEQUENCE_START: break;
-        case Data::TYPE_SEQUENCE_END: break;
+        case Data::TYPE_SEQUENCE_START:
+			for (int raw_idx : getDataIdxsOfSequence(idx))
+				result += dataSize(raw_idx);
+			result += sizeof(DataType);
+			break;
 
-        case Data::TYPE_MAP_START: break;
-        case Data::TYPE_MAP_END: break;
+        case Data::TYPE_MAP_START:
+			for (int raw_idx : getDataIdxsOfMap(idx))
+				result += dataSize(raw_idx);
+			result += sizeof(DataType);
+			break;
 
         case Data::TYPE_KEY_VALUE_PAIR:
             result += dataSize(idx + result); // key size
