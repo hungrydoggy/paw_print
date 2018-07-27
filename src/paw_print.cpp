@@ -6,6 +6,8 @@
 
 namespace paw_print {
 
+    
+
 PawPrint::PawPrint ()
 :is_closed_(false) {
 }
@@ -13,90 +15,115 @@ PawPrint::PawPrint ()
 PawPrint::~PawPrint () {
 }
 
-const vector<Data*>& PawPrint::getDatasOfSequence (SequenceData *data) {
-    if (datas_of_sequence_map_.find(data) != datas_of_sequence_map_.end())
-        return datas_of_sequence_map_[data];
+DataType PawPrint::type (int idx) const {
+    return getData<DataType>(idx);
+}
 
+Data::StrSizeType PawPrint::getStrSize (int idx) const {
+    return getData<Data::StrSizeType>(idx + sizeof(DataType));
+}
 
-    auto &result = datas_of_sequence_map_[data];
-    auto p = ((unsigned char *)data) + sizeof(DataType);
-    auto dp = (Data*)p;
-    while (dp->type() != Data::TYPE_SEQUENCE_END) {
-        result.push_back(dp);
+const char* PawPrint::getStrValue (int idx) const {
+    return (const char*)&raw_data_[idx + sizeof(DataType) + sizeof(Data::StrSizeType)];
+}
 
-        p += dp->dataSize(this);
-        dp = (Data*)p;
+int PawPrint::dataSize (int idx) const {
+    int result = sizeof(DataType);
+
+    auto t = type(idx);
+    switch (t) {
+        case Data::TYPE_INT   : result += sizeof(int   ); break;
+        case Data::TYPE_DOUBLE: result += sizeof(double); break;
+
+        case Data::TYPE_STRING:
+            result += sizeof(Data::StrSizeType) + sizeof(const char) * getStrSize(idx);
+            break;
+
+        case Data::TYPE_SEQUENCE_START: break;
+        case Data::TYPE_SEQUENCE_END: break;
+
+        case Data::TYPE_MAP_START: break;
+        case Data::TYPE_MAP_END: break;
+
+        case Data::TYPE_KEY_VALUE_PAIR:
+            result += dataSize(idx + result); // key size
+            result += dataSize(idx + result); // value size
+            break;
+
+        default: break;
+    }
+
+    return result;
+}
+
+const vector<int>& PawPrint::getDataIdxsOfSequence (int sequence_idx) {
+    if (data_idxs_of_sequence_map_.find(sequence_idx) != data_idxs_of_sequence_map_.end())
+        return data_idxs_of_sequence_map_[sequence_idx];
+
+    auto &result = data_idxs_of_sequence_map_[sequence_idx];
+    auto idx = sequence_idx + sizeof(DataType);
+    while (type(idx) != Data::TYPE_SEQUENCE_END) {
+        result.push_back(idx);
+
+        idx += dataSize(idx);
     }
     
     return result;
 }
 
-Data* PawPrint::getDataOfSequence (SequenceData *data, int idx) {
-    auto &datas = getDatasOfSequence(data);
-    if (idx < 0 || idx >= datas.size())
-        return 0;
+class SortFuncForKey {
+public:
+    SortFuncForKey (const PawPrint &paw_print)
+    :paw_print_(paw_print) {
+    }
 
-    return datas[idx];
-}
+    bool operator () (int a_idx, int b_idx) {
+        return strcmp(paw_print_.getStrValue(a_idx), paw_print_.getStrValue(b_idx)) < 0;
+    }
 
-static bool kvsort_func (KeyValuePairData *a, KeyValuePairData *b) {
-    auto ap = a->key()->value();
-    auto bp = b->key()->value();
+private:
+    const PawPrint &paw_print_;
+};
 
-    return strcmp(ap, bp) < 0;
-}
-
-const vector<KeyValuePairData*>& PawPrint::getDatasOfMap (MapData *data) {
-    if (datas_of_map_map_.find(data) != datas_of_map_map_.end())
-        return datas_of_map_map_[data];
+const vector<int>& PawPrint::getDataIdxsOfMap (int map_idx) {
+    if (data_idxs_of_map_map_.find(map_idx) != data_idxs_of_map_map_.end())
+        return data_idxs_of_map_map_[map_idx];
 
     // make datas
-    auto &result = datas_of_map_map_[data];
-    auto p = ((unsigned char *)data) + sizeof(DataType);
-    auto dp = (Data*)p;
-    std::cout << "dp : " << (int)dp->type() << std::endl;
-    exit(0);
-    while (dp->type() != Data::TYPE_MAP_END) {
-        std::cout << "6";
-        result.push_back((KeyValuePairData*)dp);
+    auto &result = data_idxs_of_map_map_[map_idx];
+    auto idx = map_idx + sizeof(DataType);
+    while (type(idx) != Data::TYPE_MAP_END) {
+        result.push_back(idx);
 
-        std::cout << "7";
-        p += dp->dataSize(this);
-        std::cout << "8";
-        dp = (Data*)p;
-
-        std::cout << ((KeyValuePairData*)dp)->key()->value()
-                << ((StringData*)((KeyValuePairData*)dp)->value())->value() << std::endl;
+        idx += dataSize(idx);
     }
 
-    std::sort(result.begin(), result.end(), kvsort_func);
+    std::sort(result.begin(), result.end(), SortFuncForKey(*this));
     
     return result;
 }
 
-static Data* _searchByBinary (
-        const vector<KeyValuePairData*> &map_datas, int first, int last, const char *key) {
+static int _searchByBinary (
+        const PawPrint &paw_print,
+        const vector<int> &map_datas,
+        int first,
+        int last,
+        const char *key) {
 
     if (first > last)
         return 0;
 
     int mid = (first + last) / 2;
-    auto mid_data = map_datas[mid];
-    auto mid_value = mid_data->key()->value();
+    auto mid_data_idx = map_datas[mid];
+    auto mid_key = paw_print.getStrValue(mid_data_idx);
 
-    auto cmp_res = strcmp(key, mid_value);
+    auto cmp_res = strcmp(key, mid_key);
     if (cmp_res < 0)
-        return _searchByBinary(map_datas, first, mid - 1, key);
+        return _searchByBinary(paw_print, map_datas, first, mid - 1, key);
     else if (cmp_res > 0)
-        return _searchByBinary(map_datas, mid + 1, last, key);
+        return _searchByBinary(paw_print, map_datas, mid + 1, last, key);
     else
-        return mid_data->value();
-}
-
-Data* PawPrint::getDataOfMap (MapData *data, const char *key) {
-    auto &map_datas = getDatasOfMap(data);
-
-    return _searchByBinary(map_datas, 0, map_datas.size() - 1, key);
+        return mid_data_idx;
 }
 
 void PawPrint::pushInt (int value) {
@@ -128,12 +155,12 @@ void PawPrint::pushString (const char *value) {
     raw_data_.resize(
             old_size
             + sizeof(DataType)
-            + sizeof(StringData::StrSizeType)
+            + sizeof(Data::StrSizeType)
             + sizeof(const char) * str_count);
     *((DataType*               )&raw_data_[old_size                   ]) = Data::TYPE_STRING;
-    *((StringData::StrSizeType*)&raw_data_[old_size + sizeof(DataType)]) = str_count;
+    *((Data::StrSizeType*)&raw_data_[old_size + sizeof(DataType)]) = str_count;
     auto p = (const char*)&raw_data_[
-            old_size + sizeof(DataType) + sizeof(StringData::StrSizeType)];
+            old_size + sizeof(DataType) + sizeof(Data::StrSizeType)];
     memcpy((void*)p, (void*)value, sizeof(const char) * str_count);
 }
 

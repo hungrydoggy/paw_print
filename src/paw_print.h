@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <string>
 
 #include "./data.h"
 
@@ -10,6 +11,7 @@
 namespace paw_print {
 
 
+using std::string;
 using std::unordered_map;
 using std::vector;
 
@@ -17,18 +19,36 @@ using std::vector;
 class PawPrint {
 public:
     class Cursor {
+    public:
+        Cursor (const PawPrint &paw_print, int idx);
+
+        DataType type ();
+
+        template <class T>
+        bool is () { return false; }
+
+        template <class T>
+        T get (const T &default_value) {
+            if (is<T>() == false)
+                return default_value;
+            return paw_print_.getData<T>(idx_ + sizeof(DataType));
+        }
+
+        const char* get (const char *default_value);
+        const char* get (const string &default_value);
+
     private:
+        const PawPrint &paw_print_;
         int idx_;
     };
 
+
+    inline const vector<unsigned char>& raw_data () {
+        return raw_data_;
+    }
+
     PawPrint();
     ~PawPrint();
-
-    const vector<Data*>& getDatasOfSequence (SequenceData *data);
-    Data* getDataOfSequence (SequenceData *data, int idx);
-
-    const vector<KeyValuePairData*>& getDatasOfMap (MapData *data);
-    Data* getDataOfMap (MapData *data, const char *key);
 
     void pushInt    (int    value); 
     void pushDouble (double value); 
@@ -39,23 +59,34 @@ public:
     void beginMap (); 
     void endMap (); 
 
-    inline const vector<unsigned char>& raw_data () {
-        return raw_data_;
+    DataType type (int idx) const;
+
+    int dataSize (int idx) const;
+
+    Data::StrSizeType getStrSize (int idx) const;
+    const char* getStrValue (int idx) const;
+
+    template <class T>
+    const T& getData (int idx) const {
+        return *((T*)&raw_data_[idx]);
     }
 
-    inline Data* root () {
-        if (raw_data_.size() <= 0)
-            return 0;
-
-        return (Data*)&raw_data_[0];
-    }
+    const vector<int>& getDataIdxsOfSequence (int sequence_idx);
+    const vector<int>& getDataIdxsOfMap (int map_idx);
 
 private:
     vector<unsigned char> raw_data_;
-    unordered_map<SequenceData*, vector<Data*>> datas_of_sequence_map_;
-    unordered_map<MapData*, vector<KeyValuePairData*>> datas_of_map_map_;
+    unordered_map<int, vector<int>> data_idxs_of_sequence_map_;
+    unordered_map<int, vector<int>> data_idxs_of_map_map_;
     bool is_closed_;
+
+
 };
+
+template<> bool PawPrint::Cursor::is<int        > ();
+template<> bool PawPrint::Cursor::is<double     > ();
+template<> bool PawPrint::Cursor::is<const char*> ();
+template<> bool PawPrint::Cursor::is<string     > ();
 
 }
 

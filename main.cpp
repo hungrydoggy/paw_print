@@ -66,11 +66,6 @@ int main () {
      *          y: 8.0
      *          z: 7.0
      */
-    auto r = (MapData*)pp.root();
-    std::cout << "root : " << r << std::endl;
-    auto v = r->get(&pp, "abc");
-    std::cout << "v : " << v << std::endl;
-    std::cout << "abc's type : " << v->type() << std::endl;
 
     return 0;
 }
