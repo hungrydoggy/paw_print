@@ -24,7 +24,8 @@ template<> bool PawPrint::Cursor::is<string     > () const { return type() == Da
 bool PawPrint::Cursor::isSequence () const { return type() == Data::TYPE_SEQUENCE; }
 bool PawPrint::Cursor::isMap      () const { return type() == Data::TYPE_MAP;      }
 
-const char* PawPrint::Cursor::get (const char *default_value) const {
+template<>
+const char* PawPrint::Cursor::get<const char*> (const char *default_value) const {
     if (is<const char*>() == false)
         return default_value;
     return paw_print_.getStrValue(idx_);
@@ -51,14 +52,13 @@ PawPrint::Cursor PawPrint::Cursor::operator[] (const char *key) const {
     if (isMap() == false)
         return Cursor(paw_print_, -1);
 
-    auto &data_idxs = paw_print_.getDataIdxsOfSequence(idx_);
-    int idx = paw_print_.findRawIdxOfValue(data_idxs, 0, data_idxs.size() - 1, key);
-    if (idx < 0)
+    auto &data_idxs = paw_print_.getDataIdxsOfMap(idx_);
+    int pair_idx = paw_print_.findRawIdxOfValue(data_idxs, 0, data_idxs.size() - 1, key);
+    if (pair_idx < 0)
         return Cursor(paw_print_, -1);
 
-    auto pair_idx = data_idxs[idx];
     auto value_idx = paw_print_.getValueRawIdxOfPair(pair_idx);
-    return Cursor(paw_print_, data_idxs[value_idx]);
+    return Cursor(paw_print_, value_idx);
 }
 
 PawPrint::Cursor PawPrint::Cursor::operator[] (const string &key) const {

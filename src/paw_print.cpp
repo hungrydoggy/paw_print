@@ -94,7 +94,9 @@ public:
     }
 
     bool operator () (int a_idx, int b_idx) {
-        return strcmp(paw_print_.getStrValue(a_idx), paw_print_.getStrValue(b_idx)) < 0;
+		auto a_key_idx = paw_print_.getKeyRawIdxOfPair(a_idx);
+		auto b_key_idx = paw_print_.getKeyRawIdxOfPair(b_idx);
+        return strcmp(paw_print_.getStrValue(a_key_idx), paw_print_.getStrValue(b_key_idx)) < 0;
     }
 
 private:
@@ -129,8 +131,9 @@ int PawPrint::findRawIdxOfValue (
         return -1;
 
     int mid = (first + last) / 2;
-    auto mid_data_idx = map_datas[mid];
-    auto mid_key = getStrValue(mid_data_idx);
+    auto mid_pair_idx = map_datas[mid];
+	auto mid_key_idx = getKeyRawIdxOfPair(mid_pair_idx);
+    auto mid_key = getStrValue(mid_key_idx);
 
     auto cmp_res = strcmp(key, mid_key);
     if (cmp_res < 0)
@@ -138,7 +141,7 @@ int PawPrint::findRawIdxOfValue (
     else if (cmp_res > 0)
         return findRawIdxOfValue(map_datas, mid + 1, last, key);
     else
-        return mid_data_idx;
+        return mid_pair_idx;
 }
 
 void PawPrint::pushInt (int value) {

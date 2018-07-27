@@ -22,6 +22,7 @@ public:
     public:
         Cursor (const PawPrint &paw_print, int idx);
 
+		inline int idx () const { return idx_; }
         DataType type () const;
 
         template <class T>
@@ -31,13 +32,12 @@ public:
         bool isMap () const;
 
         template <class T>
-        T get (const T default_value) {
+        T get (T default_value) const {
             if (is<T>() == false)
                 return default_value;
             return paw_print_.getData<T>(idx_ + sizeof(DataType));
         }
 
-        const char* get (const char *default_value) const;
         const char* get (const string &default_value) const;
 
         Cursor operator[] (int idx) const;
@@ -111,6 +111,8 @@ template<> bool PawPrint::Cursor::is<int        > () const;
 template<> bool PawPrint::Cursor::is<double     > () const;
 template<> bool PawPrint::Cursor::is<const char*> () const;
 template<> bool PawPrint::Cursor::is<string     > () const;
+
+template<> const char* PawPrint::Cursor::get<const char*> (const char *default_value) const;
 
 }
 
