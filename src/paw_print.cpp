@@ -15,6 +15,13 @@ PawPrint::PawPrint ()
 PawPrint::~PawPrint () {
 }
 
+PawPrint::Cursor PawPrint::root () const {
+    if (raw_data_.size() <= 0)
+        return Cursor(*this, -1);
+
+    return Cursor(*this, 0);
+}
+
 DataType PawPrint::type (int idx) const {
     return getData<DataType>(idx);
 }
@@ -25,6 +32,15 @@ Data::StrSizeType PawPrint::getStrSize (int idx) const {
 
 const char* PawPrint::getStrValue (int idx) const {
     return (const char*)&raw_data_[idx + sizeof(DataType) + sizeof(Data::StrSizeType)];
+}
+
+int PawPrint::getKeyRawIdxOfPair (int pair_idx) const {
+    return pair_idx + sizeof(DataType);
+}
+
+int PawPrint::getValueRawIdxOfPair (int pair_idx) const {
+    auto key_idx = getKeyRawIdxOfPair(pair_idx);
+    return key_idx + dataSize(key_idx);
 }
 
 int PawPrint::dataSize (int idx) const {
@@ -56,7 +72,7 @@ int PawPrint::dataSize (int idx) const {
     return result;
 }
 
-const vector<int>& PawPrint::getDataIdxsOfSequence (int sequence_idx) {
+const vector<int>& PawPrint::getDataIdxsOfSequence (int sequence_idx) const {
     if (data_idxs_of_sequence_map_.find(sequence_idx) != data_idxs_of_sequence_map_.end())
         return data_idxs_of_sequence_map_[sequence_idx];
 
@@ -85,7 +101,7 @@ private:
     const PawPrint &paw_print_;
 };
 
-const vector<int>& PawPrint::getDataIdxsOfMap (int map_idx) {
+const vector<int>& PawPrint::getDataIdxsOfMap (int map_idx) const {
     if (data_idxs_of_map_map_.find(map_idx) != data_idxs_of_map_map_.end())
         return data_idxs_of_map_map_[map_idx];
 
@@ -103,25 +119,24 @@ const vector<int>& PawPrint::getDataIdxsOfMap (int map_idx) {
     return result;
 }
 
-static int _searchByBinary (
-        const PawPrint &paw_print,
+int PawPrint::findRawIdxOfValue (
         const vector<int> &map_datas,
         int first,
         int last,
-        const char *key) {
+        const char *key) const {
 
     if (first > last)
-        return 0;
+        return -1;
 
     int mid = (first + last) / 2;
     auto mid_data_idx = map_datas[mid];
-    auto mid_key = paw_print.getStrValue(mid_data_idx);
+    auto mid_key = getStrValue(mid_data_idx);
 
     auto cmp_res = strcmp(key, mid_key);
     if (cmp_res < 0)
-        return _searchByBinary(paw_print, map_datas, first, mid - 1, key);
+        return findRawIdxOfValue(map_datas, first, mid - 1, key);
     else if (cmp_res > 0)
-        return _searchByBinary(paw_print, map_datas, mid + 1, last, key);
+        return findRawIdxOfValue(map_datas, mid + 1, last, key);
     else
         return mid_data_idx;
 }
@@ -157,7 +172,7 @@ void PawPrint::pushString (const char *value) {
             + sizeof(DataType)
             + sizeof(Data::StrSizeType)
             + sizeof(const char) * str_count);
-    *((DataType*               )&raw_data_[old_size                   ]) = Data::TYPE_STRING;
+    *((DataType*         )&raw_data_[old_size                   ]) = Data::TYPE_STRING;
     *((Data::StrSizeType*)&raw_data_[old_size + sizeof(DataType)]) = str_count;
     auto p = (const char*)&raw_data_[
             old_size + sizeof(DataType) + sizeof(Data::StrSizeType)];

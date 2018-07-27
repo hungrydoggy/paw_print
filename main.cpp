@@ -66,6 +66,11 @@ int main () {
      *          y: 8.0
      *          z: 7.0
      */
+    auto root = pp.root();
+    std::cout << (int)root["xyz"].type();
+    std::cout << (int)root["abc"].type();
+
+    std::cout << std::endl;
 
     return 0;
 }
