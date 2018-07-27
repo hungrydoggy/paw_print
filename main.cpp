@@ -1,3 +1,5 @@
+//#define _TEST
+#if defined(_TEST)
 
 #include <assert.h>
 #include <iostream>
@@ -134,11 +136,11 @@ int main () {
 	assert(root["abc"]["e"]["x"].get(-1.0) == 9.0);
 	assert(root["abc"]["e"]["y"].get(-1.0) == 8.0);
 	assert(root["abc"]["e"]["z"].get(-1.0) == 7.0);
-	assert(root["abc"]["f"].type() == Data::TYPE_SEQUENCE);
-	assert(root["abc"]["f"][0].type() == Data::TYPE_MAP);
-	assert(root["abc"]["f"][0]["first"].type() == Data::TYPE_MAP);
-	assert(root["abc"]["f"][0]["first"]["name"].type() == Data::TYPE_STRING);
-	assert(root["abc"]["f"][0]["first"]["value"].type() == Data::TYPE_INT);
+	assert(root["abc"]["f"].type() == PawPrint::Data::TYPE_SEQUENCE);
+	assert(root["abc"]["f"][0].type() == PawPrint::Data::TYPE_MAP);
+	assert(root["abc"]["f"][0]["first"].type() == PawPrint::Data::TYPE_MAP);
+	assert(root["abc"]["f"][0]["first"]["name"].type() == PawPrint::Data::TYPE_STRING);
+	assert(root["abc"]["f"][0]["first"]["value"].type() == PawPrint::Data::TYPE_INT);
 	assert(strcmp(root["abc"]["f"][0]["first"]["name"].get(""), "first") == 0);
 	assert(root["abc"]["f"][0]["first"]["value"].get(-1) == 1);
 	assert(strcmp(root["abc"]["f"][1]["second"]["name"].get(""), "second") == 0);
@@ -146,3 +148,4 @@ int main () {
 
     return 0;
 }
+#endif

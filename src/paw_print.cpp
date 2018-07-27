@@ -26,12 +26,12 @@ DataType PawPrint::type (int idx) const {
     return getData<DataType>(idx);
 }
 
-Data::StrSizeType PawPrint::getStrSize (int idx) const {
-    return getData<Data::StrSizeType>(idx + sizeof(DataType));
+PawPrint::Data::StrSizeType PawPrint::getStrSize (int idx) const {
+    return getData<PawPrint::Data::StrSizeType>(idx + sizeof(DataType));
 }
 
 const char* PawPrint::getStrValue (int idx) const {
-    return (const char*)&raw_data_[idx + sizeof(DataType) + sizeof(Data::StrSizeType)];
+    return (const char*)&raw_data_[idx + sizeof(DataType) + sizeof(PawPrint::Data::StrSizeType)];
 }
 
 int PawPrint::getKeyRawIdxOfPair (int pair_idx) const {
