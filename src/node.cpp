@@ -87,8 +87,6 @@ static int _parse_step (
         auto next_token_idx = _checkRuleAndSetChildNode(text, tokens, token_idx, non, ri, node); 
         if (next_token_idx >= tokens.size())
             return next_token_idx;
-
-        token_idx = next_token_idx;
     }
 
     return token_idx;
