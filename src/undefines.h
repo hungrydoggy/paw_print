@@ -3,6 +3,8 @@
 
 
 #undef PAW_GETTER
+#undef PAW_SETTER
+#undef PAW_GETTER_SETTER
 
 
 #endif

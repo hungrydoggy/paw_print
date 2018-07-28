@@ -79,24 +79,33 @@ class Node {
 public:
     static shared_ptr<Node> parse (const char *text, const vector<Token> &tokens);
 
-    PAW_GETTER(shared_ptr<TerminalBase>&, termnon)
-    PAW_GETTER(int, rule_idx)
-    PAW_GETTER(int, token_idx)
-    PAW_GETTER(vector<shared_ptr<Node>>&, children)
+    PAW_GETTER(Node*, parent)
+    PAW_GETTER(const shared_ptr<TerminalBase>&, termnon)
+    PAW_GETTER(RuleElem::IndentType, indent_type)
+    PAW_GETTER_SETTER(const int, rule_idx)
+    PAW_GETTER_SETTER(const int, token_idx)
+    PAW_GETTER(const vector<shared_ptr<Node>>&, children)
 
-    Node (const shared_ptr<TerminalBase>& termnon, int rule_idx, int token_idx);
+    Node (const shared_ptr<TerminalBase>& termnon, RuleElem::IndentType indent_type);
 
     inline void setChild (int idx, const shared_ptr<Node> &child) {
         children_[idx] = child;
+        child->parent_ = this;
     }
 
     void setRuleAndPrepareChildren (int rule_idx);
+    Node* findPrePriorityNode ();
+    Node* findNextPriorityNode ();
 
 private:
+    Node *parent_;
     shared_ptr<TerminalBase> termnon_;
+    RuleElem::IndentType indent_type_;
     int rule_idx_;
     int token_idx_;
     vector<shared_ptr<Node>> children_;
+
+    int _findChild (Node *child);
 };
 
 }

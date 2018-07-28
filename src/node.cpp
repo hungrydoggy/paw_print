@@ -15,87 +15,119 @@ using std::dynamic_pointer_cast;
 shared_ptr<Nonterminal> TerminalBase::start_;
 
 
-static int _parse_step (
+
+static bool _checkNextRule (
+        const char *text, const vector<Token> &tokens, Node *node);
+
+static bool _onEndOfNode(
         const char *text,
         const vector<Token> &tokens,
-        int token_idx,
-        const shared_ptr<Nonterminal> &non,
-        shared_ptr<Node> &node);
+        Node *node) {
 
+    // find out
+    if (node->token_idx() + 1 >= tokens.size())
+        return true;
 
-// return next token idx
-static int _checkRuleAndSetChildNode (
-        const char *text,
-        const vector<Token> &tokens,
-        int token_idx,
-        const shared_ptr<Nonterminal> &non,
-        int rule_idx,
-        shared_ptr<Node> &node) {
     
-    int pre_indent = 0;
+    // try more
+    auto pre_node = node->findPrePriorityNode();
+    if (pre_node == null) // semantic error
+        return false;
 
-    node->setRuleAndPrepareChildren(rule_idx);
-
-    auto &rule = non->rules[rule_idx];
-    for (int ri=0; ri<rule.size(); ++ri) {
-        auto &token = tokens[token_idx];
-
-        auto &re = rule[ri];
-        auto child_node = make_shared<Node>(re.termnon, 0, token_idx);
-        node->setChild(ri, child_node);
-
-        if (re.termnon->isTerminal()) {
-            auto term = dynamic_pointer_cast<Terminal>(re.termnon);
-            if (term->type != token.type)
-                return token_idx;
-
-            switch (re.indent_type) {
-                case RuleElem::ANY: break;
-                case RuleElem::SAME:
-                    if (token.indent != pre_indent)
-                        return token_idx;
-                    break;
-                case RuleElem::BIGGER:
-                    if (token.indent - pre_indent != 4)
-                        return token_idx;
-                    break;
-            }
-            token_idx += 1;
-        }else {
-            auto non = dynamic_pointer_cast<Nonterminal>(re.termnon);
-            auto next_token_idx = _parse_step(text, tokens, token_idx, non, child_node);
-            if (next_token_idx == token_idx)
-                return token_idx;
-            token_idx = next_token_idx;
-        }
-
-        pre_indent = token.indent;
-    }
-
-    return token_idx;
+    return _checkNextRule(text, tokens, pre_node);
 }
 
-// return next token idx
-static int _parse_step (
+static bool _checkNode (
         const char *text,
         const vector<Token> &tokens,
         int token_idx,
-        const shared_ptr<Nonterminal> &non,
-        shared_ptr<Node> &node) {
+        Node *node) {
 
-    for (int ri=0; ri<non->rules.size(); ++ri) {
-        auto next_token_idx = _checkRuleAndSetChildNode(text, tokens, token_idx, non, ri, node); 
-        if (next_token_idx >= tokens.size())
-            return next_token_idx;
+    node->token_idx(token_idx);
+
+    if (node->termnon()->isTerminal() == true) {
+        auto term = dynamic_pointer_cast<Terminal>(node->termnon());
+        auto &token = tokens[token_idx];
+        if (term->type != token.type) {
+            // not correct terminal
+            return _checkNextRule(text, tokens, node->parent());
+        }
+
+
+        // correct terminal
+        int pre_indent = (token_idx > 1)? tokens[token_idx - 1].indent : 0;
+
+        switch (node->indent_type()) {
+            case RuleElem::ANY: break;
+            case RuleElem::SAME:
+                if (token.indent != pre_indent)
+                    return _checkNextRule(text, tokens, node->parent());
+                break;
+            case RuleElem::BIGGER:
+                if (token.indent - pre_indent != 4)
+                    return _checkNextRule(text, tokens, node->parent());
+                break;
+        }
+
+        //to next node
+        auto next_node = node->findNextPriorityNode();
+        if (next_node == null)
+            return _onEndOfNode(text, tokens, node);
+
+        return _checkNode(
+                text,
+                tokens,
+                node->token_idx() + 1,
+                next_node);
+    }
+    
+
+    // nonterminal
+    return _checkNode(
+            text,
+            tokens,
+            node->token_idx() + 1,
+            node->children()[0].get());
+}
+
+static bool _checkNextRule (
+        const char *text, const vector<Token> &tokens, Node *node) {
+
+    if (node == null)
+        return false;
+
+    auto non = dynamic_pointer_cast<Nonterminal>(node->termnon());
+    auto next_rule_idx = node->rule_idx() + 1;
+    if (next_rule_idx >= non->rules.size()) {
+        // no next rule
+        if (node->parent() == null)
+            return false;
+        return _checkNextRule(text, tokens, node->parent());
     }
 
-    return token_idx;
+
+    // next rule
+    node->setRuleAndPrepareChildren(next_rule_idx);
+
+    auto &rules = non->rules[next_rule_idx];
+    for (int ri=0; ri<rules.size(); ++ri) {
+        auto &r = rules[ri];
+        auto child = make_shared<Node>(r.termnon, r.indent_type);
+        node->setChild(ri, child);
+    }
+
+    return _checkNode(
+            text,
+            tokens,
+            node->token_idx() + 1,
+            node->children()[0].get());
 }
 
 shared_ptr<Node> Node::parse (const char *text, const vector<Token> &tokens) {
-    shared_ptr<Node> node = make_shared<Node>(TerminalBase::start(), 0, 0);
-    auto next_token_idx = _parse_step(text, tokens, 0, TerminalBase::start(), node);
-    if (next_token_idx < tokens.size())
+    shared_ptr<Node> node = make_shared<Node>(TerminalBase::start(), RuleElem::IndentType::ANY);
+
+    auto is_ok = _checkNode(text, tokens, 0, node.get());
+    if (is_ok == false)
         return null;
 
     return node;
@@ -159,12 +191,12 @@ Nonterminal::Nonterminal (const string &name)
 :TerminalBase(name) {
 }
 
-Node::Node (const shared_ptr<TerminalBase> &termnon, int rule_idx, int token_idx)
+Node::Node (const shared_ptr<TerminalBase> &termnon, RuleElem::IndentType indent_type)
 :termnon_(termnon),
- rule_idx_(rule_idx),
- token_idx_(token_idx) {
+ indent_type_(indent_type),
+ rule_idx_(-1),
+ token_idx_(-1) {
 
-    setRuleAndPrepareChildren(rule_idx);
 }
 
 void Node::setRuleAndPrepareChildren (int rule_idx) {
@@ -179,6 +211,57 @@ void Node::setRuleAndPrepareChildren (int rule_idx) {
     children_.resize(rule.size());
     for (int ci=0; ci<children_.size(); ++ci) {
         children_[ci] = null;
+    }
+}
+
+int Node::_findChild (Node *child) {
+    for (int ci=0; ci<children_.size(); ++ci) {
+        if (child == children_[ci].get())
+            return ci;
+    }
+    
+    return -1;
+}
+
+Node* Node::findPrePriorityNode () {
+    if (parent_ == null)
+        return null;
+
+    int pre_bro_idx = parent_->_findChild(this) - 1;
+    if (pre_bro_idx < 0)
+        return parent_;
+
+    auto node = parent_->children_[pre_bro_idx].get();
+    while (true) {
+        if (node->children_.size() <= 0)
+            return node;
+
+        auto child = node->children_[node->children_.size() - 1];
+        if (child == null || node->termnon_->isTerminal() == true)
+            return node;
+
+        node = child.get();
+    }
+}
+
+Node* Node::findNextPriorityNode () {
+    if (parent_ == null)
+        return null;
+
+    auto next_bro_idx = parent_->_findChild(this) + 1;
+    if (next_bro_idx >= parent_->children_.size())
+        return parent_;
+
+    auto node = parent_->children_[next_bro_idx].get();
+    while (true) {
+        if (node->children_.size() <= 0)
+            return node;
+
+        auto child = node->children_[0];
+        if (child == null || node->termnon_->isTerminal() == true)
+            return node;
+
+        node = child.get();
     }
 }
 
