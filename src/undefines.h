@@ -1,0 +1,8 @@
+#ifndef PAW_PRINT_UNDEFINES
+#define PAW_PRINT_UNDEFINES
+
+
+#undef PAW_GETTER
+
+
+#endif

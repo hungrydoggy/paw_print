@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "./defines.h"
 #include "./token.h"
 
 
@@ -15,25 +16,29 @@ using std::shared_ptr;
 using std::unordered_map;
 using std::vector;
 
+class Node;
 class Nonterminal;
 
 
-class Node {
+class TerminalBase {
 public:
-    static shared_ptr<Nonterminal> start;
-
-    static shared_ptr<Node> parse (const char *text, const vector<Token> &tokens);
+    inline static shared_ptr<Nonterminal> start () {
+        _init();
+        return start_;
+    };
     
 
     string name;
 
-    Node (const string &name);
-    virtual ~Node () {}
+    TerminalBase (const string &name);
+    virtual ~TerminalBase () {}
 
     virtual bool isTerminal () = 0;
 
 private:
+    static shared_ptr<Nonterminal> start_;
     static void _init ();
+
 };
 
 class RuleElem {
@@ -44,15 +49,15 @@ public:
         BIGGER,
     };
 
-    shared_ptr<Node> node;
+    shared_ptr<TerminalBase> termnon;
     IndentType indent_type;
 
-    RuleElem (const shared_ptr<Node> &node, IndentType indent_type)
-    :node(node), indent_type(indent_type) {
+    RuleElem (const shared_ptr<TerminalBase> &termnon, IndentType indent_type)
+    :termnon(termnon), indent_type(indent_type) {
     }
 };
 
-class Terminal : public Node {
+class Terminal : public TerminalBase {
 public:
     Token::Type type;
 
@@ -61,7 +66,7 @@ public:
     bool isTerminal () override { return true; }
 };
 
-class Nonterminal : public Node {
+class Nonterminal : public TerminalBase {
 public:
     vector<vector<RuleElem>> rules;
 
@@ -70,6 +75,31 @@ public:
     bool isTerminal () override { return false; }
 };
 
+class Node {
+public:
+    static shared_ptr<Node> parse (const char *text, const vector<Token> &tokens);
+
+    PAW_GETTER(shared_ptr<TerminalBase>&, termnon)
+    PAW_GETTER(int, rule_idx)
+    PAW_GETTER(int, token_idx)
+    PAW_GETTER(vector<shared_ptr<Node>>&, children)
+
+    Node (const shared_ptr<TerminalBase>& termnon, int rule_idx, int token_idx);
+
+    inline void setChild (int idx, const shared_ptr<Node> &child) {
+        children_[idx] = child;
+    }
+
+    void setRuleAndPrepareChildren (int rule_idx);
+
+private:
+    shared_ptr<TerminalBase> termnon_;
+    int rule_idx_;
+    int token_idx_;
+    vector<shared_ptr<Node>> children_;
+};
+
 }
 
+#include "./undefines.h"
 #endif

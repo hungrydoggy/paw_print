@@ -1,5 +1,7 @@
 #include "node.h"
 
+#include "./defines.h"
+
 #include <iostream>
 
 
@@ -10,87 +12,98 @@ using std::endl;
 using std::dynamic_pointer_cast;
 
 
-shared_ptr<Nonterminal> Node::start;
+shared_ptr<Nonterminal> TerminalBase::start_;
 
 
-static bool _parse_step (
+static int _parse_step (
         const char *text,
         const vector<Token> &tokens,
-        int idx,
-        const shared_ptr<Nonterminal> &non);
-
-
-static bool _checkRule (
-        const char *text,
-        const vector<Token> &tokens,
-        int idx,
+        int token_idx,
         const shared_ptr<Nonterminal> &non,
-        int rule_idx) {
+        shared_ptr<Node> &node);
+
+
+// return next token idx
+static int _checkRuleAndSetChildNode (
+        const char *text,
+        const vector<Token> &tokens,
+        int token_idx,
+        const shared_ptr<Nonterminal> &non,
+        int rule_idx,
+        shared_ptr<Node> &node) {
     
     int pre_indent = 0;
 
+    node->setRuleAndPrepareChildren(rule_idx);
+
     auto &rule = non->rules[rule_idx];
     for (int ri=0; ri<rule.size(); ++ri) {
-        int token_idx = idx + ri;
         auto &token = tokens[token_idx];
 
         auto &re = rule[ri];
-        if (re.node->isTerminal()) {
-            auto term = dynamic_pointer_cast<Terminal>(re.node);
+        auto child_node = make_shared<Node>(re.termnon, 0, token_idx);
+        node->setChild(ri, child_node);
+
+        if (re.termnon->isTerminal()) {
+            auto term = dynamic_pointer_cast<Terminal>(re.termnon);
             if (term->type != token.type)
-                return false;
+                return token_idx;
 
             switch (re.indent_type) {
                 case RuleElem::ANY: break;
                 case RuleElem::SAME:
                     if (token.indent != pre_indent)
-                        return false;
+                        return token_idx;
                     break;
                 case RuleElem::BIGGER:
                     if (token.indent - pre_indent != 4)
-                        return false;
+                        return token_idx;
                     break;
             }
+            token_idx += 1;
         }else {
-            auto non = dynamic_pointer_cast<Nonterminal>(re.node);
-            auto is_ok = _parse_step(text, tokens, token_idx, non);
-            if (is_ok == false)
-                return false;
+            auto non = dynamic_pointer_cast<Nonterminal>(re.termnon);
+            auto next_token_idx = _parse_step(text, tokens, token_idx, non, child_node);
+            if (next_token_idx == token_idx)
+                return token_idx;
+            token_idx = next_token_idx;
         }
 
         pre_indent = token.indent;
     }
 
-    return true;
+    return token_idx;
 }
 
-static bool _parse_step (
+// return next token idx
+static int _parse_step (
         const char *text,
         const vector<Token> &tokens,
-        int idx,
-        const shared_ptr<Nonterminal> &non) {
+        int token_idx,
+        const shared_ptr<Nonterminal> &non,
+        shared_ptr<Node> &node) {
 
     for (int ri=0; ri<non->rules.size(); ++ri) {
-        auto is_ok = _checkRule(text, tokens, idx, non, ri); 
-        if (is_ok == true) {
-            //TODO
-            return true;
-        }
+        auto next_token_idx = _checkRuleAndSetChildNode(text, tokens, token_idx, non, ri, node); 
+        if (next_token_idx >= tokens.size())
+            return next_token_idx;
+
+        token_idx = next_token_idx;
     }
 
-    return false;
+    return token_idx;
 }
 
 shared_ptr<Node> Node::parse (const char *text, const vector<Token> &tokens) {
-    _init();
+    shared_ptr<Node> node = make_shared<Node>(TerminalBase::start(), 0, 0);
+    auto next_token_idx = _parse_step(text, tokens, 0, TerminalBase::start(), node);
+    if (next_token_idx < tokens.size())
+        return null;
 
-    auto is_ok = _parse_step(text, tokens, 0, start);
-    cout << is_ok << endl;
-
-    return 0;
+    return node;
 }
 
-void Node::_init () {
+void TerminalBase::_init () {
     static bool is_inited = false;
     if (is_inited == true)
         return;
@@ -130,23 +143,45 @@ void Node::_init () {
     non_node->rules.push_back({ RuleElem(non_map     , RuleElem::ANY), });
             //RuleElem(non_sequence, RuleElem::ANY),
 
-    start = make_shared<Nonterminal>("S");
-    start->rules.push_back({ RuleElem(non_node, RuleElem::ANY) });
+    start_ = make_shared<Nonterminal>("S");
+    start_->rules.push_back({ RuleElem(non_node, RuleElem::ANY) });
 }
 
 
-Node::Node (const string &name)
+TerminalBase::TerminalBase (const string &name)
 :name(name) {
 }
 
 Terminal::Terminal (const string &name, Token::Type type)
-:Node(name),
+:TerminalBase(name),
  type(type) {
 }
 
 Nonterminal::Nonterminal (const string &name)
-:Node(name) {
+:TerminalBase(name) {
 }
 
+Node::Node (const shared_ptr<TerminalBase> &termnon, int rule_idx, int token_idx)
+:termnon_(termnon),
+ rule_idx_(rule_idx),
+ token_idx_(token_idx) {
+
+    setRuleAndPrepareChildren(rule_idx);
+}
+
+void Node::setRuleAndPrepareChildren (int rule_idx) {
+    rule_idx_ = rule_idx;
+
+    if (termnon_->isTerminal() == true)
+        return;
+
+    // make children
+    auto non = dynamic_pointer_cast<Nonterminal>(termnon_);
+    auto &rule = non->rules[rule_idx];
+    children_.resize(rule.size());
+    for (int ci=0; ci<children_.size(); ++ci) {
+        children_[ci] = null;
+    }
+}
 
 }
