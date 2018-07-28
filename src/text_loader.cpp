@@ -288,18 +288,43 @@ int PawPrint::_parse_step (const char *text, const vector<Token> &tokens, int st
     auto idx = start_idx;
     auto &t = tokens[idx];
     switch (t.type) {
+        case Token::INT:
+            return idx + 1;
+        case Token::DOUBLE:
+            return idx + 1;
+        case Token::STRING:
+            return idx + 1;
+        case Token::COLON:
+            return idx + 1;
+        case Token::COMMA:
+            return idx + 1;
+        case Token::DASH:
+            return idx + 1;
         case Token::CURLY_OPEN:
             curly_open_idx_stack_.push(idx);
+            beginMap();
+            return idx + 1;
+        case Token::CURLY_CLOSE:
+            curly_open_idx_stack_.pop();
+            endMap();
             return idx + 1;
         case Token::SQUARE_OPEN:
             square_open_idx_stack_.push(idx);
+            beginSequence();
+            return idx + 1;
+        case Token::SQUARE_CLOSE:
+            square_open_idx_stack_.pop();
+            endSequence();
             return idx + 1;
     }
 
     return idx + 1;
 }
 
-bool PawPrint::parse (const char *text, const vector<Token> &tokens) {
+shared_ptr<Node> PawPrint::parse (const char *text, const vector<Token> &tokens) {
+    auto node = Node::parse(text, tokens);
+    return node;
+
     raw_data_.clear();
 
     while (curly_open_idx_stack_.empty() == false) curly_open_idx_stack_.pop();
@@ -309,10 +334,10 @@ bool PawPrint::parse (const char *text, const vector<Token> &tokens) {
     while (idx<tokens.size()) {
         idx = _parse_step(text, tokens, idx);
         if (idx < 0)
-            return false;
+            return 0;
     }
 
-    return true;
+    return 0;
 }
 
 bool PawPrint::loadText (const char *text) {
@@ -323,8 +348,8 @@ bool PawPrint::loadText (const char *text) {
     if (is_tokenize_ok == false)
         return false;
 
-    auto is_parse_ok = parse(text, tokens);
-    if (is_parse_ok == false)
+    auto node = parse(text, tokens);
+    if (node == 0)
         return false;
 
     return true;

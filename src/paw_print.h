@@ -7,6 +7,7 @@
 #include <string>
 
 #include "token.h"
+#include "node.h"
 
 
 namespace paw_print {
@@ -89,7 +90,7 @@ public:
 
 
     bool tokenize (const char *text, vector<Token> &tokens);
-    bool parse (const char *text, const vector<Token> &tokens);
+    shared_ptr<Node> parse (const char *text, const vector<Token> &tokens);
     bool loadText (const char *text);
 
 

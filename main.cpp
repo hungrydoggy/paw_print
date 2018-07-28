@@ -149,20 +149,31 @@ static void _t_basic () {
 	assert(root["abc"]["f"][1]["second"]["value"].get(-1) == 2);
 }
 
-void _t_load_boss_appear_snake_obj () {
-    PawPrint paw;
-
-    FILE* f = fopen("../paw/boss_appear_snake.obj", "r");
-
+void _t_load_simple_obj () {
+    FILE* f = fopen("../paw/simple.obj", "r");
     fseek(f, 0, SEEK_END);
     size_t size = ftell(f);
-
     char* text = new char[size];
+    rewind(f);
+    fread(text, sizeof(char), size, f);
 
+    PawPrint paw;
+    paw.loadText(text);
+
+    delete[] text;
+}
+
+void _t_load_boss_appear_snake_obj () {
+
+    FILE* f = fopen("../paw/boss_appear_snake.obj", "r");
+    fseek(f, 0, SEEK_END);
+    size_t size = ftell(f);
+    char* text = new char[size];
     rewind(f);
     fread(text, sizeof(char), size, f);
 
 
+    PawPrint paw;
     vector<Token> tokens;
     paw.tokenize(text, tokens);
     vector<string> results = {
@@ -208,6 +219,7 @@ void _t_load_boss_appear_snake_obj () {
 
 int main () {
     _t_basic();
+    _t_load_simple_obj();
     _t_load_boss_appear_snake_obj();
     return 0;
 }
