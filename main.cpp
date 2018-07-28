@@ -235,6 +235,6 @@ void _t_load_boss_appear_snake_obj () {
 int main () {
     _t_basic();
     _t_load_simple_obj();
-    _t_load_boss_appear_snake_obj();
+    //_t_load_boss_appear_snake_obj();
     return 0;
 }

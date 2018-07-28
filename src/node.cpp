@@ -30,11 +30,10 @@ static bool _onEndOfNode(
 
     
     // try more
-    auto pre_node = node->findPrePriorityNode();
-    if (pre_node == null) // semantic error
-        return false;
+	if (node->parent() == null)
+		return false;
 
-    return _checkNextRule(text, tokens, pre_node);
+    return _checkNextRule(text, tokens, node->parent());
 }
 
 static bool _checkNode (
@@ -51,12 +50,19 @@ static bool _checkNode (
 
 
 	// check indent
-	int pre_indent = (token_idx > 1) ? tokens[token_idx - 1].indent : 0;
+	int pre_indent = 0;
+	auto pre_brother = node->findPreBrother();
+	if (pre_brother != null)
+		pre_indent = tokens[pre_brother->token_idx()].indent;
 
 	switch (node->indent_type()) {
 	case RuleElem::ANY: break;
 	case RuleElem::SAME:
 		if (token.indent != pre_indent)
+			return _checkNextRule(text, tokens, node->parent());
+		break;
+	case RuleElem::SMALLER:
+		if (token.indent - pre_indent != -4)
 			return _checkNextRule(text, tokens, node->parent());
 		break;
 	case RuleElem::BIGGER:
@@ -103,9 +109,12 @@ static bool _checkNextRule (
     auto next_rule_idx = node->rule_idx() + 1;
     if (next_rule_idx >= non->rules.size()) {
         // no next rule
-        if (node->parent() == null)
-            return false;
-        return _checkNextRule(text, tokens, node->parent());
+
+		// try more
+		auto pre_node = node->findPrePriorityNode();
+		if (pre_node == null) // semantic error
+			return false;
+        return _checkNextRule(text, tokens, pre_node);
     }
 
 
@@ -163,8 +172,8 @@ void TerminalBase::_init () {
             RuleElem(non_kv, RuleElem::ANY),
         });
     non_map->rules.push_back({ 
-            RuleElem(non_map, RuleElem::ANY ),
-            RuleElem(non_kv , RuleElem::SAME),
+            RuleElem(non_kv , RuleElem::ANY ),
+            RuleElem(non_map, RuleElem::SAME),
         });
 
     //auto non_sequence = make_shared<Nonterminal>("SEQUENCE");
@@ -213,9 +222,6 @@ void Node::setRuleAndPrepareChildren (int rule_idx) {
     auto non = dynamic_pointer_cast<Nonterminal>(termnon_);
     auto &rule = non->rules[rule_idx];
     children_.resize(rule.size());
-    for (int ci=0; ci<children_.size(); ++ci) {
-        children_[ci] = null;
-    }
 }
 
 int Node::_findChild (Node *child) {
@@ -227,21 +233,35 @@ int Node::_findChild (Node *child) {
     return -1;
 }
 
+Node* Node::findPreBrother() {
+	if (parent_ == null)
+		return null;
+
+	int pre_bro_idx = parent_->_findChild(this) - 1;
+	if (pre_bro_idx < 0)
+		return null;
+
+	return parent_->children_[pre_bro_idx].get();
+}
+
 Node* Node::findPrePriorityNode () {
     if (parent_ == null)
         return null;
 
-    int pre_bro_idx = parent_->_findChild(this) - 1;
-    if (pre_bro_idx < 0)
-        return parent_;
+	auto pre_brother = findPreBrother();
+	if (pre_brother == null)
+		return parent_;
 
-    auto node = parent_->children_[pre_bro_idx].get();
+	if (pre_brother->termnon()->isTerminal() == true)
+		return parent_;
+
+	auto node = pre_brother;
     while (true) {
         if (node->children_.size() <= 0)
             return node;
 
         auto child = node->children_[node->children_.size() - 1];
-        if (child == null)
+        if (child == null || child->termnon()->isTerminal() == true)
             return node;
 
         node = child.get();

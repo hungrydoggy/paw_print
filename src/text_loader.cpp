@@ -337,8 +337,11 @@ bool PawPrint::loadText (const char *text) {
         return false;
 
     auto node = parse(text, tokens);
-    if (node == 0)
+    if (node == null)
         return false;
+
+
+	// write raw_data
 
     return true;
 }

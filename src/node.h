@@ -46,6 +46,7 @@ public:
     enum IndentType {
         ANY,
         SAME,
+		SMALLER,
         BIGGER,
     };
 
@@ -96,6 +97,7 @@ public:
     void setRuleAndPrepareChildren (int rule_idx);
     Node* findPrePriorityNode ();
     Node* findNextLeafNode ();
+	Node* findPreBrother ();
 
 private:
     Node *parent_;
