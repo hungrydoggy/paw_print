@@ -326,20 +326,6 @@ int PawPrint::_parse_step (const char *text, const vector<Token> &tokens, int st
 shared_ptr<Node> PawPrint::parse (const char *text, const vector<Token> &tokens) {
     auto node = Node::parse(text, tokens);
     return node;
-
-    raw_data_.clear();
-
-    while (curly_open_idx_stack_.empty() == false) curly_open_idx_stack_.pop();
-    while (square_open_idx_stack_.empty() == false) square_open_idx_stack_.pop();
-
-    int idx = 0;
-    while (idx<tokens.size()) {
-        idx = _parse_step(text, tokens, idx);
-        if (idx < 0)
-            return 0;
-    }
-
-    return 0;
 }
 
 bool PawPrint::loadText (const char *text) {

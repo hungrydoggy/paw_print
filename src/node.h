@@ -95,7 +95,7 @@ public:
 
     void setRuleAndPrepareChildren (int rule_idx);
     Node* findPrePriorityNode ();
-    Node* findNextPriorityNode ();
+    Node* findNextLeafNode ();
 
 private:
     Node *parent_;

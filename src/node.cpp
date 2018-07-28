@@ -43,11 +43,32 @@ static bool _checkNode (
         int token_idx,
         Node *node) {
 
-    node->token_idx(token_idx);
+	if (token_idx >= tokens.size())
+		return _checkNextRule(text, tokens, node->parent());
 
+    node->token_idx(token_idx);
+	auto &token = tokens[token_idx];
+
+
+	// check indent
+	int pre_indent = (token_idx > 1) ? tokens[token_idx - 1].indent : 0;
+
+	switch (node->indent_type()) {
+	case RuleElem::ANY: break;
+	case RuleElem::SAME:
+		if (token.indent != pre_indent)
+			return _checkNextRule(text, tokens, node->parent());
+		break;
+	case RuleElem::BIGGER:
+		if (token.indent - pre_indent != 4)
+			return _checkNextRule(text, tokens, node->parent());
+		break;
+	}
+
+
+	// check terminal
     if (node->termnon()->isTerminal() == true) {
         auto term = dynamic_pointer_cast<Terminal>(node->termnon());
-        auto &token = tokens[token_idx];
         if (term->type != token.type) {
             // not correct terminal
             return _checkNextRule(text, tokens, node->parent());
@@ -55,22 +76,8 @@ static bool _checkNode (
 
 
         // correct terminal
-        int pre_indent = (token_idx > 1)? tokens[token_idx - 1].indent : 0;
-
-        switch (node->indent_type()) {
-            case RuleElem::ANY: break;
-            case RuleElem::SAME:
-                if (token.indent != pre_indent)
-                    return _checkNextRule(text, tokens, node->parent());
-                break;
-            case RuleElem::BIGGER:
-                if (token.indent - pre_indent != 4)
-                    return _checkNextRule(text, tokens, node->parent());
-                break;
-        }
-
         //to next node
-        auto next_node = node->findNextPriorityNode();
+        auto next_node = node->findNextLeafNode();
         if (next_node == null)
             return _onEndOfNode(text, tokens, node);
 
@@ -83,11 +90,7 @@ static bool _checkNode (
     
 
     // nonterminal
-    return _checkNode(
-            text,
-            tokens,
-            node->token_idx() + 1,
-            node->children()[0].get());
+	return _checkNextRule(text, tokens, node);
 }
 
 static bool _checkNextRule (
@@ -119,7 +122,7 @@ static bool _checkNextRule (
     return _checkNode(
             text,
             tokens,
-            node->token_idx() + 1,
+            node->token_idx(),
             node->children()[0].get());
 }
 
@@ -192,7 +195,8 @@ Nonterminal::Nonterminal (const string &name)
 }
 
 Node::Node (const shared_ptr<TerminalBase> &termnon, RuleElem::IndentType indent_type)
-:termnon_(termnon),
+:parent_(null),
+ termnon_(termnon),
  indent_type_(indent_type),
  rule_idx_(-1),
  token_idx_(-1) {
@@ -237,20 +241,20 @@ Node* Node::findPrePriorityNode () {
             return node;
 
         auto child = node->children_[node->children_.size() - 1];
-        if (child == null || node->termnon_->isTerminal() == true)
+        if (child == null)
             return node;
 
         node = child.get();
     }
 }
 
-Node* Node::findNextPriorityNode () {
+Node* Node::findNextLeafNode () {
     if (parent_ == null)
         return null;
 
     auto next_bro_idx = parent_->_findChild(this) + 1;
     if (next_bro_idx >= parent_->children_.size())
-        return parent_;
+        return parent_->findNextLeafNode();
 
     auto node = parent_->children_[next_bro_idx].get();
     while (true) {
@@ -258,7 +262,7 @@ Node* Node::findNextPriorityNode () {
             return node;
 
         auto child = node->children_[0];
-        if (child == null || node->termnon_->isTerminal() == true)
+        if (child == null)
             return node;
 
         node = child.get();
