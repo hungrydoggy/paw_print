@@ -115,7 +115,7 @@ static int _findAndAddToken (
     for (; true; ++idx) {
         const char c = text[idx];
         if (c == 0) {
-            return idx - 1;
+            return idx;
         }if (c == '\n') {
             indent = 0;
             need_update_indent = true;
@@ -137,12 +137,14 @@ static int _findAndAddToken (
         switch (c) {
             case 0:
                 return idx;
+			case '\r':
             case ' ': {
                 auto is_ok = _addWordToken(text, first_idx, idx - 1, indent, tokens);
                 if (is_ok == false)
                     return -1;
                 return idx + 1;
             }
+
             case '\n': {
                 auto is_ok = _addWordToken(text, first_idx, idx - 1, indent, tokens);
                 if (is_ok == false)

@@ -1,5 +1,6 @@
 
 #include <assert.h>
+#include <fstream>
 #include <iostream>
 #include <stdio.h>
 
@@ -10,6 +11,7 @@ using namespace paw_print;
 
 using std::cout;
 using std::endl;
+using std::ifstream;
 
 static void _t_basic () {
     PawPrint pp;
@@ -150,12 +152,19 @@ static void _t_basic () {
 }
 
 void _t_load_simple_obj () {
-    FILE* f = fopen("../paw/simple.obj", "r");
-    fseek(f, 0, SEEK_END);
-    size_t size = ftell(f);
-    char* text = new char[size];
-    rewind(f);
-    fread(text, sizeof(char), size, f);
+	ifstream is("../../paw/simple.obj", std::ifstream::binary);
+
+	// get length of file:
+	is.seekg(0, is.end);
+	int size = is.tellg();
+	is.seekg(0, is.beg);
+	// allocate memory:
+	char* text = new char[size + 2];
+	// read data as a block:
+	is.read(text, size);
+	text[size] = '\n';
+	text[size + 1] = 0;
+	is.close();
 
     PawPrint paw;
     paw.loadText(text);
@@ -165,12 +174,18 @@ void _t_load_simple_obj () {
 
 void _t_load_boss_appear_snake_obj () {
 
-    FILE* f = fopen("../paw/boss_appear_snake.obj", "r");
-    fseek(f, 0, SEEK_END);
-    size_t size = ftell(f);
-    char* text = new char[size];
-    rewind(f);
-    fread(text, sizeof(char), size, f);
+	ifstream is("../../paw/boss_appear_snake.obj", std::ios::binary);
+	// get length of file:
+	is.seekg(0, is.end);
+	int size = is.tellg();
+	is.seekg(0, is.beg);
+	// allocate memory:
+	char* text = new char[size + 2];
+	// read data as a block:
+	is.read(text, size);
+	text[size] = '\n';
+	text[size + 1] = 0;
+	is.close();
 
 
     PawPrint paw;
