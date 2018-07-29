@@ -221,22 +221,38 @@ void TerminalBase::_init () {
     is_inited = true;
 
 
-    auto term_int    = make_shared<Terminal>("int"   , Token::INT   );
-    auto term_double = make_shared<Terminal>("double", Token::DOUBLE);
-    auto term_string = make_shared<Terminal>("string", Token::STRING);
-    auto term_colon  = make_shared<Terminal>("colon" , Token::COLON );
+    auto term_int         = make_shared<Terminal>("int"        , Token::INT        );
+    auto term_double      = make_shared<Terminal>("double"     , Token::DOUBLE     );
+    auto term_string      = make_shared<Terminal>("string"     , Token::STRING     );
+    auto term_colon       = make_shared<Terminal>("colon"      , Token::COLON      );
+    auto term_comma       = make_shared<Terminal>("comma"      , Token::COMMA      );
+	auto term_curly_open  = make_shared<Terminal>("curly_open" , Token::CURLY_OPEN );
+	auto term_curly_close = make_shared<Terminal>("curly_close", Token::CURLY_CLOSE);
 
-    auto non_kv   = make_shared<Nonterminal>("KV"  );
-    auto non_map  = make_shared<Nonterminal>("MAP" );
-    auto non_node = make_shared<Nonterminal>("NODE");
+    auto non_kv                  = make_shared<Nonterminal>("KV"                  );
+    auto non_map                 = make_shared<Nonterminal>("MAP"                 );
+	auto non_map_blocked_content = make_shared<Nonterminal>("MAP_BLOCKED_CONTENTS");
 
+	auto non_sequence = make_shared<Nonterminal>("SEQUENCE");
+    auto non_node     = make_shared<Nonterminal>("NODE");
+
+	// KV
     non_kv->rules.push_back({
             RuleElem(non_node  , RuleElem::ANY   ),
             RuleElem(term_colon, RuleElem::SAME  ),
             RuleElem(non_node  , RuleElem::BIGGER),
         });
 
-
+	// MAP
+    non_map->rules.push_back({ 
+			RuleElem(term_curly_open , RuleElem::ANY),
+			RuleElem(term_curly_close, RuleElem::ANY),
+        });
+    non_map->rules.push_back({ 
+			RuleElem(term_curly_open        , RuleElem::ANY),
+			RuleElem(non_map_blocked_content, RuleElem::ANY),
+			RuleElem(term_curly_close       , RuleElem::ANY),
+        });
     non_map->rules.push_back({ 
             RuleElem(non_kv, RuleElem::ANY),
         });
@@ -245,7 +261,24 @@ void TerminalBase::_init () {
             RuleElem(non_map, RuleElem::SAME),
         });
 
-    //auto non_sequence = make_shared<Nonterminal>("SEQUENCE");
+	// MAP_BLOCKED_CONTENT
+	non_map_blocked_content->rules.push_back({
+            RuleElem(non_kv, RuleElem::ANY),
+		});
+	non_map_blocked_content->rules.push_back({
+            RuleElem(non_kv                 , RuleElem::ANY),
+			RuleElem(term_comma             , RuleElem::ANY),
+			RuleElem(non_map_blocked_content, RuleElem::ANY),
+		});
+	
+	// SEQUENCE
+    non_sequence->rules.push_back({ 
+            RuleElem(non_kv, RuleElem::ANY),
+        });
+	non_sequence->rules.push_back({
+            RuleElem(non_kv , RuleElem::ANY ),
+            RuleElem(non_map, RuleElem::SAME),
+        });
     
 
     non_node->rules.push_back({ RuleElem(term_int    , RuleElem::ANY), });

@@ -17,6 +17,7 @@ public:
         COLON,
         COMMA,
         DASH,
+		SHARP,
         SQUARE_OPEN,
         SQUARE_CLOSE,
         CURLY_OPEN,

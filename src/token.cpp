@@ -23,7 +23,8 @@ string Token::toString (const char *text) {
         case STRING      : ss << "STRING, "      ; break;
         case COLON       : ss << "COLON, "       ; break;
         case COMMA       : ss << "COMMA, "       ; break;
-        case DASH        : ss << "DASH, "       ; break;
+        case DASH        : ss << "DASH, "        ; break;
+		case SHARP       : ss << "SHARP, "       ; break;
         case SQUARE_OPEN : ss << "SQUARE_OPEN, " ; break;
         case SQUARE_CLOSE: ss << "SQUARE_CLOSE, "; break;
         case CURLY_OPEN  : ss << "CURLY_OPEN, "  ; break;

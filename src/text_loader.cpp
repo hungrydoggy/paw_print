@@ -102,6 +102,24 @@ static int _findAndAddToken_quoted(
 }
 
 // return next idx
+static int _findAndSkip_comment (
+		const char *text,
+		int start_idx) {
+	
+	auto idx = start_idx;
+	for (; true; ++idx) {
+		const char c = text[idx];
+		switch (c) {
+		case 0:
+		case '\n':
+			return idx;
+		default:
+			break;
+		}
+	}
+}
+
+// return next idx
 static int _findAndAddToken (
         const char *text,
         int start_idx,
@@ -139,16 +157,29 @@ static int _findAndAddToken (
                 return idx;
 			case '\r':
             case ' ': {
-                auto is_ok = _addWordToken(text, first_idx, idx - 1, indent, tokens);
-                if (is_ok == false)
-                    return -1;
+				if (idx > first_idx) {
+					auto is_ok = _addWordToken(text, first_idx, idx - 1, indent, tokens);
+					if (is_ok == false)
+						return -1;
+				}
                 return idx + 1;
             }
 
+			case '#': {
+				if (idx > first_idx) {
+					auto is_ok = _addWordToken(text, first_idx, idx - 1, indent, tokens);
+					if (is_ok == false)
+						return -1;
+				}
+				return _findAndSkip_comment(text, idx + 1);
+			}
+
             case '\n': {
-                auto is_ok = _addWordToken(text, first_idx, idx - 1, indent, tokens);
-                if (is_ok == false)
-                    return -1;
+				if (idx > first_idx) {
+					auto is_ok = _addWordToken(text, first_idx, idx - 1, indent, tokens);
+					if (is_ok == false)
+						return -1;
+				}
                 return idx;
             }
             case ',': {
