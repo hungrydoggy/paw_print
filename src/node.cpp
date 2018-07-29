@@ -229,11 +229,14 @@ void TerminalBase::_init () {
 	auto term_curly_open  = make_shared<Terminal>("curly_open" , Token::CURLY_OPEN );
 	auto term_curly_close = make_shared<Terminal>("curly_close", Token::CURLY_CLOSE);
 
-    auto non_kv                  = make_shared<Nonterminal>("KV"                  );
-    auto non_map                 = make_shared<Nonterminal>("MAP"                 );
-	auto non_map_blocked_content = make_shared<Nonterminal>("MAP_BLOCKED_CONTENTS");
+    auto non_kv  = make_shared<Nonterminal>("KV" );
+    auto non_map = make_shared<Nonterminal>("MAP");
+
+	auto non_kv_for_blocked_content = make_shared<Nonterminal>("KV_FOR_BLOCKED_CONTENTS");
+	auto non_map_blocked_content    = make_shared<Nonterminal>("MAP_BLOCKED_CONTENTS"   );
 
 	auto non_sequence = make_shared<Nonterminal>("SEQUENCE");
+
     auto non_node     = make_shared<Nonterminal>("NODE");
 
 	// KV
@@ -260,15 +263,22 @@ void TerminalBase::_init () {
             RuleElem(non_kv , RuleElem::ANY ),
             RuleElem(non_map, RuleElem::SAME),
         });
+	
+	// KV_FOR_BLOCKED_CONTENT
+    non_kv->rules.push_back({
+            RuleElem(non_node  , RuleElem::ANY),
+            RuleElem(term_colon, RuleElem::ANY),
+            RuleElem(non_node  , RuleElem::ANY),
+        });
 
 	// MAP_BLOCKED_CONTENT
 	non_map_blocked_content->rules.push_back({
-            RuleElem(non_kv, RuleElem::ANY),
+            RuleElem(non_kv_for_blocked_content, RuleElem::ANY),
 		});
 	non_map_blocked_content->rules.push_back({
-            RuleElem(non_kv                 , RuleElem::ANY),
-			RuleElem(term_comma             , RuleElem::ANY),
-			RuleElem(non_map_blocked_content, RuleElem::ANY),
+            RuleElem(non_kv_for_blocked_content, RuleElem::ANY),
+			RuleElem(term_comma                , RuleElem::ANY),
+			RuleElem(non_map_blocked_content   , RuleElem::ANY),
 		});
 	
 	// SEQUENCE
