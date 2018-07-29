@@ -3,6 +3,7 @@
 #include "./defines.h"
 
 #include <iostream>
+#include <set>
 
 
 namespace paw_print {
@@ -10,16 +11,52 @@ namespace paw_print {
 using std::cout;
 using std::endl;
 using std::dynamic_pointer_cast;
+using std::set;
+
+using RuleHistoryByTokenIdx = unordered_map<int, set<unsigned int>>;
 
 
 shared_ptr<Nonterminal> TerminalBase::start_;
 
+unsigned int Nonterminal::next_no_ = 0;
 
 
-static bool _checkNextRule (
-        const char *text, const vector<Token> &tokens, Node *node);
+
+static bool _checkNextRule(
+		RuleHistoryByTokenIdx &history_map,
+		const char *text,
+		const vector<Token> &tokens,
+		Node *node);
+
+
+
+static unsigned int _makeRuleKey(unsigned int non_no, int rule_idx) {
+	return (non_no << 16) | ((unsigned int)rule_idx);
+}
+
+static bool _isInHistory(
+		RuleHistoryByTokenIdx &history_map,
+		int token_idx,
+		unsigned int rule_key) {
+
+	if (history_map.find(token_idx) == history_map.end())
+		return false;
+
+	auto &history = history_map[token_idx];
+	return history.find(rule_key) != history.end();
+}
+
+static void _addToHistory(
+		RuleHistoryByTokenIdx &history_map,
+		int token_idx,
+		unsigned int rule_key) {
+
+	auto &history = history_map[token_idx];
+	history.insert(rule_key);
+}
 
 static bool _onEndOfNode(
+		RuleHistoryByTokenIdx &history_map,
         const char *text,
         const vector<Token> &tokens,
         Node *node) {
@@ -30,20 +67,18 @@ static bool _onEndOfNode(
 
     
     // try more
-	if (node->parent() == null)
-		return false;
-
-    return _checkNextRule(text, tokens, node->parent());
+    return _checkNextRule(history_map, text, tokens, node->findPrePriorityNode());
 }
 
 static bool _checkNode (
+		RuleHistoryByTokenIdx &history_map,
         const char *text,
         const vector<Token> &tokens,
         int token_idx,
         Node *node) {
 
 	if (token_idx >= tokens.size())
-		return _checkNextRule(text, tokens, node->parent());
+		return _checkNextRule(history_map, text, tokens, node);
 
     node->token_idx(token_idx);
 	auto &token = tokens[token_idx];
@@ -59,15 +94,15 @@ static bool _checkNode (
 	case RuleElem::ANY: break;
 	case RuleElem::SAME:
 		if (token.indent != pre_indent)
-			return _checkNextRule(text, tokens, node->parent());
+			return _checkNextRule(history_map, text, tokens, node->findPrePriorityNode());
 		break;
 	case RuleElem::SMALLER:
 		if (token.indent - pre_indent != -4)
-			return _checkNextRule(text, tokens, node->parent());
+			return _checkNextRule(history_map, text, tokens, node->findPrePriorityNode());
 		break;
 	case RuleElem::BIGGER:
 		if (token.indent - pre_indent != 4)
-			return _checkNextRule(text, tokens, node->parent());
+			return _checkNextRule(history_map, text, tokens, node->findPrePriorityNode());
 		break;
 	}
 
@@ -77,7 +112,7 @@ static bool _checkNode (
         auto term = dynamic_pointer_cast<Terminal>(node->termnon());
         if (term->type != token.type) {
             // not correct terminal
-            return _checkNextRule(text, tokens, node->parent());
+            return _checkNextRule(history_map, text, tokens, node->parent());
         }
 
 
@@ -85,9 +120,10 @@ static bool _checkNode (
         //to next node
         auto next_node = node->findNextLeafNode();
         if (next_node == null)
-            return _onEndOfNode(text, tokens, node);
+            return _onEndOfNode(history_map, text, tokens, node);
 
         return _checkNode(
+				history_map,
                 text,
                 tokens,
                 node->token_idx() + 1,
@@ -96,17 +132,27 @@ static bool _checkNode (
     
 
     // nonterminal
-	return _checkNextRule(text, tokens, node);
+	return _checkNextRule(history_map, text, tokens, node);
 }
 
-static bool _checkNextRule (
-        const char *text, const vector<Token> &tokens, Node *node) {
+static bool _checkNextRule(
+	RuleHistoryByTokenIdx &history_map,
+	const char *text,
+	const vector<Token> &tokens,
+	Node *node) {
 
-    if (node == null)
-        return false;
+	if (node == null)
+		return false;
 
-    auto non = dynamic_pointer_cast<Nonterminal>(node->termnon());
-    auto next_rule_idx = node->rule_idx() + 1;
+	// check has next rule
+	auto non = dynamic_pointer_cast<Nonterminal>(node->termnon());
+	auto next_rule_idx = node->rule_idx() + 1;
+	auto rule_key = _makeRuleKey(non->no(), next_rule_idx);
+	while (_isInHistory(history_map, node->token_idx(), rule_key) == true) {
+		++next_rule_idx;
+		rule_key = _makeRuleKey(non->no(), next_rule_idx);
+	}
+
     if (next_rule_idx >= non->rules.size()) {
         // no next rule
 
@@ -114,12 +160,13 @@ static bool _checkNextRule (
 		auto pre_node = node->findPrePriorityNode();
 		if (pre_node == null) // semantic error
 			return false;
-        return _checkNextRule(text, tokens, pre_node);
+        return _checkNextRule(history_map, text, tokens, pre_node);
     }
 
 
     // next rule
     node->setRuleAndPrepareChildren(next_rule_idx);
+	_addToHistory(history_map, node->token_idx(), rule_key);
 
     auto &rules = non->rules[next_rule_idx];
     for (int ri=0; ri<rules.size(); ++ri) {
@@ -129,16 +176,21 @@ static bool _checkNextRule (
     }
 
     return _checkNode(
+			history_map,
             text,
             tokens,
             node->token_idx(),
             node->children()[0].get());
 }
 
+
 shared_ptr<Node> Node::parse (const char *text, const vector<Token> &tokens) {
+
+	RuleHistoryByTokenIdx history_map;
+
     shared_ptr<Node> node = make_shared<Node>(TerminalBase::start(), RuleElem::IndentType::ANY);
 
-    auto is_ok = _checkNode(text, tokens, 0, node.get());
+    auto is_ok = _checkNode(history_map, text, tokens, 0, node.get());
     if (is_ok == false)
         return null;
 
@@ -201,6 +253,8 @@ Terminal::Terminal (const string &name, Token::Type type)
 
 Nonterminal::Nonterminal (const string &name)
 :TerminalBase(name) {
+	no_ = next_no_;
+	++next_no_;
 }
 
 Node::Node (const shared_ptr<TerminalBase> &termnon, RuleElem::IndentType indent_type)

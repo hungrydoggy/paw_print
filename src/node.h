@@ -71,10 +71,20 @@ class Nonterminal : public TerminalBase {
 public:
     vector<vector<RuleElem>> rules;
 
+	inline unsigned int no () { return no_; }
+
+
     Nonterminal (const string &name);
 
     bool isTerminal () override { return false; }
+
+
+private:
+	static unsigned int next_no_;
+	
+	unsigned int no_;
 };
+
 
 class Node {
 public:
