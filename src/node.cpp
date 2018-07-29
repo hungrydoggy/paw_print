@@ -90,20 +90,33 @@ static bool _checkNode (
 	if (pre_brother != null)
 		pre_indent = tokens[pre_brother->token_idx()].indent;
 
+	bool is_indent_ok = true;
 	switch (node->indent_type()) {
 	case RuleElem::ANY: break;
 	case RuleElem::SAME:
 		if (token.indent != pre_indent)
-			return _checkNextRule(history_map, text, tokens, node->findPrePriorityNode());
+			is_indent_ok = false;
 		break;
 	case RuleElem::SMALLER:
 		if (token.indent - pre_indent != -4)
-			return _checkNextRule(history_map, text, tokens, node->findPrePriorityNode());
+			is_indent_ok = false;
 		break;
 	case RuleElem::BIGGER:
 		if (token.indent - pre_indent != 4)
-			return _checkNextRule(history_map, text, tokens, node->findPrePriorityNode());
+			is_indent_ok = false;
 		break;
+	}
+	if (is_indent_ok == false) {
+		auto non = dynamic_pointer_cast<Nonterminal>(
+			(node->termnon()->isTerminal()) ?
+			node->parent()->termnon() : node->termnon());
+		auto rule_idx = (node->termnon()->isTerminal()) ?
+				node->parent()->rule_idx() : node->rule_idx();
+		_addToHistory(
+				history_map,
+				node->parent()->children()[0]->token_idx(),
+				_makeRuleKey(non->no(), rule_idx));
+		return _checkNextRule(history_map, text, tokens, node->findPrePriorityNode());
 	}
 
 
@@ -112,6 +125,11 @@ static bool _checkNode (
         auto term = dynamic_pointer_cast<Terminal>(node->termnon());
         if (term->type != token.type) {
             // not correct terminal
+			auto non = dynamic_pointer_cast<Nonterminal>(node->parent()->termnon());
+			_addToHistory(
+					history_map,
+					node->token_idx(),
+					_makeRuleKey(non->no(), node->parent()->rule_idx()));
             return _checkNextRule(history_map, text, tokens, node->parent());
         }
 
@@ -166,7 +184,6 @@ static bool _checkNextRule(
 
     // next rule
     node->setRuleAndPrepareChildren(next_rule_idx);
-	_addToHistory(history_map, node->token_idx(), rule_key);
 
     auto &rules = non->rules[next_rule_idx];
     for (int ri=0; ri<rules.size(); ++ri) {
