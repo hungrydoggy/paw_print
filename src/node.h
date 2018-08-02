@@ -58,6 +58,14 @@ public:
     }
 };
 
+class Rule {
+public:
+	shared_ptr<Nonterminal> left_side;
+	vector<RuleElem> right_side;
+
+	Rule (const shared_ptr<Nonterminal> &left_side, const vector<RuleElem> &right_side);
+};
+
 class Terminal : public TerminalBase {
 public:
     Token::Type type;
@@ -69,7 +77,7 @@ public:
 
 class Nonterminal : public TerminalBase {
 public:
-    vector<vector<RuleElem>> rules;
+    vector<Rule> rules;
 
 	inline unsigned int no () { return no_; }
 

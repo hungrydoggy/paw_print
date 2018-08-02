@@ -185,7 +185,7 @@ static bool _checkNextRule(
     // next rule
     node->setRuleAndPrepareChildren(next_rule_idx);
 
-    auto &rules = non->rules[next_rule_idx];
+    auto &rules = non->rules[next_rule_idx].right_side;
     for (int ri=0; ri<rules.size(); ++ri) {
         auto &r = rules[ri];
         auto child = make_shared<Node>(r.termnon, r.indent_type);
@@ -214,6 +214,11 @@ shared_ptr<Node> Node::parse (const char *text, const vector<Token> &tokens) {
     return node;
 }
 
+Rule::Rule (const shared_ptr<Nonterminal> &left_side, const vector<RuleElem> &right_side)
+:left_side(left_side),
+ right_side(right_side) {
+}
+
 void TerminalBase::_init () {
     static bool is_inited = false;
     if (is_inited == true)
@@ -240,59 +245,72 @@ void TerminalBase::_init () {
     auto non_node     = make_shared<Nonterminal>("NODE");
 
 	// KV
-    non_kv->rules.push_back({
+    non_kv->rules.push_back(
+		Rule(non_kv, {
             RuleElem(non_node  , RuleElem::ANY   ),
             RuleElem(term_colon, RuleElem::SAME  ),
             RuleElem(non_node  , RuleElem::BIGGER),
-        });
+        }));
 
 	// MAP
-    non_map->rules.push_back({ 
+    non_map->rules.push_back(
+		Rule(non_map, {
 			RuleElem(term_curly_open        , RuleElem::ANY),
 			RuleElem(non_map_blocked_content, RuleElem::ANY),
 			RuleElem(term_curly_close       , RuleElem::ANY),
-        });
-    non_map->rules.push_back({ 
+        }));
+    non_map->rules.push_back(
+		Rule(non_map, {
 			RuleElem(term_curly_open , RuleElem::ANY),
 			RuleElem(term_curly_close, RuleElem::ANY),
-        });
-    non_map->rules.push_back({ 
+        }));
+    non_map->rules.push_back(
+		Rule(non_map, {
             RuleElem(non_kv , RuleElem::ANY ),
             RuleElem(non_map, RuleElem::SAME),
-        });
-    non_map->rules.push_back({ 
+        }));
+    non_map->rules.push_back(
+		Rule(non_map, {
             RuleElem(non_kv, RuleElem::ANY),
-        });
+        }));
 	
 	// KV_FOR_BLOCKED_CONTENT
-	non_kv_for_blocked_content->rules.push_back({
+	non_kv_for_blocked_content->rules.push_back(
+		Rule(non_kv_for_blocked_content, {
             RuleElem(non_node  , RuleElem::ANY),
             RuleElem(term_colon, RuleElem::ANY),
             RuleElem(non_node  , RuleElem::ANY),
-        });
+        }));
 
 	// MAP_BLOCKED_CONTENT
-	non_map_blocked_content->rules.push_back({
+	non_map_blocked_content->rules.push_back(
+		Rule(non_map_blocked_content, {
             RuleElem(non_kv_for_blocked_content, RuleElem::ANY),
 			RuleElem(term_comma                , RuleElem::ANY),
 			RuleElem(non_map_blocked_content   , RuleElem::ANY),
-		});
-	non_map_blocked_content->rules.push_back({
+		}));
+	non_map_blocked_content->rules.push_back(
+		Rule(non_map_blocked_content, {
             RuleElem(non_kv_for_blocked_content, RuleElem::ANY),
-		});
+		}));
 	
 	// SEQUENCE
     
 
 	// NODE
-    non_node->rules.push_back({ RuleElem(term_int    , RuleElem::ANY), });
-    non_node->rules.push_back({ RuleElem(term_double , RuleElem::ANY), });
-    non_node->rules.push_back({ RuleElem(term_string , RuleElem::ANY), });
-    non_node->rules.push_back({ RuleElem(non_map     , RuleElem::ANY), });
+    non_node->rules.push_back(
+		Rule(non_node, { RuleElem(term_int    , RuleElem::ANY), }));
+    non_node->rules.push_back(
+		Rule(non_node, { RuleElem(term_double , RuleElem::ANY), }));
+    non_node->rules.push_back(
+		Rule(non_node, { RuleElem(term_string , RuleElem::ANY), }));
+    non_node->rules.push_back(
+		Rule(non_node, { RuleElem(non_map     , RuleElem::ANY), }));
 
 
     start_ = make_shared<Nonterminal>("S");
-    start_->rules.push_back({ RuleElem(non_node, RuleElem::ANY) });
+    start_->rules.push_back(
+		Rule(start_, { RuleElem(non_node, RuleElem::ANY) }));
 }
 
 
@@ -328,7 +346,7 @@ void Node::setRuleAndPrepareChildren (int rule_idx) {
 
     // make children
     auto non = dynamic_pointer_cast<Nonterminal>(termnon_);
-    auto &rule = non->rules[rule_idx];
+    auto &rule = non->rules[rule_idx].right_side;
     children_.resize(rule.size());
 }
 

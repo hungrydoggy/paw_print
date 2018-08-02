@@ -26,7 +26,7 @@ void ParsingTableGenerator::addSymbol(const shared_ptr<Nonterminal> &non, bool i
 
 Configuration::Configuration (
 		const shared_ptr<Nonterminal> &left_side,
-		const vector<RuleElem> &rule,
+		const Rule &rule,
 		int idx_after_cursor,
 		const set<shared_ptr<Terminal>> &lookahead)
 :left_side_(left_side),
@@ -38,16 +38,16 @@ Configuration::Configuration (
 
 void Configuration::print () {
 	cout << left_side_->name << " -> ";
-	for (int ri = 0; ri < rule_.size(); ++ri) {
-		auto &re = rule_[ri];
+	for (int ri = 0; ri < rule_.right_side.size(); ++ri) {
+		auto &re = rule_.right_side[ri];
 		if (ri == idx_after_cursor_)
 			cout << ".";
 		cout << re.termnon->name;
-		if (ri < rule_.size() - 1)
+		if (ri < rule_.right_side.size() - 1)
 			cout << " ";
 	}
 
-	if (idx_after_cursor_ >= rule_.size())
+	if (idx_after_cursor_ >= rule_.right_side.size())
 		cout << ".";
 
 	cout << "  , ";
@@ -95,7 +95,7 @@ static void _findFirst (
 
 	// find recursively
 	for (auto rule : non->rules) {
-		auto &re = rule[0];
+		auto &re = rule.right_side[0];
 		_findFirst(re.termnon, result, history);
 	}
 }
@@ -115,11 +115,11 @@ static void _addClosures (
 		vector<shared_ptr<Configuration>> &closures) {
 	auto &rule = c->rule();
 	auto idx_after_cursor = c->idx_after_cursor();
-	if (idx_after_cursor >= rule.size())
+	if (idx_after_cursor >= rule.right_side.size())
 		return;
 
 	// find non after cursor
-	auto &re = rule[idx_after_cursor];
+	auto &re = rule.right_side[idx_after_cursor];
 	if (re.termnon->isTerminal() == true)
 		return;
 	auto non = dynamic_pointer_cast<Nonterminal>(re.termnon);
@@ -127,12 +127,12 @@ static void _addClosures (
 
 	// make lookahead
 	set<shared_ptr<Terminal>> lookahead;
-	if (idx_after_cursor + 1 >= rule.size()) {
+	if (idx_after_cursor + 1 >= rule.right_side.size()) {
 		// if next isn't exist, use lookahead
 		lookahead = c->lookahead();
 	}else {
 		// use first(next)
-		auto &next = rule[idx_after_cursor + 1].termnon;
+		auto &next = rule.right_side[idx_after_cursor + 1].termnon;
 		if (next->isTerminal() == true)
 			lookahead.insert(dynamic_pointer_cast<Terminal>(next));
 		else
@@ -205,10 +205,10 @@ static void _makeNextTransitionInfoMap (
 		unordered_map<shared_ptr<TerminalBase>, vector<shared_ptr<Configuration>>> &result) {
 
 	for (auto &c : configs) {
-		if (c->idx_after_cursor() >= c->rule().size())
+		if (c->idx_after_cursor() >= c->rule().right_side.size())
 			continue;
 
-		auto &re = c->rule()[c->idx_after_cursor()];
+		auto &re = c->rule().right_side[c->idx_after_cursor()];
 
 		result[re.termnon].push_back(
 				make_shared<Configuration>(
@@ -256,15 +256,15 @@ static bool _areStatesEqual (
 	for (int ci = 0; ci < state->transited_configs().size(); ++ci) {
 		auto &state_c = state->transited_configs()[ci];
 		auto &other_c = other->transited_configs()[ci];
-		if (state_c->left_side()        != other_c->left_side()        ||
-			state_c->idx_after_cursor() != other_c->idx_after_cursor() ||
-			state_c->rule().size()      != other_c->rule().size())
+		if (state_c->left_side()              != other_c->left_side()             ||
+			state_c->idx_after_cursor()       != other_c->idx_after_cursor()      ||
+			state_c->rule().right_side.size() != other_c->rule().right_side.size())
 			return false;
 
 		auto &state_r = state_c->rule();
 		auto &other_r = other_c->rule();
-		for (int ri = 0; ri < state_r.size(); ++ri) {
-			if (state_r[ri].termnon != other_r[ri].termnon)
+		for (int ri = 0; ri < state_r.right_side.size(); ++ri) {
+			if (state_r.right_side[ri].termnon != other_r.right_side[ri].termnon)
 				return false;
 		}
 	}
@@ -326,7 +326,7 @@ static void _mergeStates (
 	result = new_states;
 }
 
-shared_ptr<ParseTable> ParsingTableGenerator::generateTable () {
+shared_ptr<ParsingTable> ParsingTableGenerator::generateTable () {
 
 	if (start_symbol_ == null) {
 		//TODO err: you have to set start_symbol
@@ -340,11 +340,10 @@ shared_ptr<ParseTable> ParsingTableGenerator::generateTable () {
 		_findFirst(non, first);
 	}
 
-	auto result = make_shared<ParseTable>();
 
 	// make s_prime
 	auto s_prime = make_shared<Nonterminal>("S\'");
-	s_prime->rules.push_back({ RuleElem(start_symbol_, RuleElem::ANY) });
+	s_prime->rules.push_back(Rule(s_prime, { RuleElem(start_symbol_, RuleElem::ANY) }));
 
 	// make start state
 	set<shared_ptr<Terminal>> start_lookahead{ null };
@@ -372,9 +371,98 @@ shared_ptr<ParseTable> ParsingTableGenerator::generateTable () {
 		s->print();
 	}
 
-	// TODO
+	// make parsing table
+	return make_shared<ParsingTable>(symbols_, start_symbol_, states_);
+}
 
-	return result;
+
+ParsingTable::ActionInfo::ActionInfo ()
+:action(ActionInfo::NONE),
+ idx(-1) {
+}
+
+ParsingTable::ActionInfo::ActionInfo (Action action, int idx)
+:action(action),
+ idx(idx) {
+
+}
+
+static void _makeReduceTable (
+		const unordered_map<const Rule*, int> &rule_idx_map,
+		const shared_ptr<Nonterminal> &start_symbol,
+		const vector<shared_ptr<Configuration>> &configs,
+		unordered_map<shared_ptr<TerminalBase>, ParsingTable::ActionInfo> &action_info_map) {
+
+	for (auto &c : configs) {
+		auto &rule = c->rule();
+		if (c->idx_after_cursor() < rule.right_side.size())
+			continue;
+
+		int rule_idx = rule_idx_map.at(&rule);
+		for (auto &t : c->lookahead()) {
+			if (c->left_side() == start_symbol && t == null) {
+				action_info_map[t] = ParsingTable::ActionInfo(
+						ParsingTable::ActionInfo::ACCEPT, rule_idx);
+			}else {
+				action_info_map[t] = ParsingTable::ActionInfo(
+						ParsingTable::ActionInfo::REDUCE, rule_idx);
+			}
+		}
+	}
+}
+
+static void _makeTransitionTable(
+		const unordered_map<shared_ptr<TerminalBase>, shared_ptr<State>> &transition_map,
+		const unordered_map<shared_ptr<State>, int> &state_idx_map,
+		unordered_map<shared_ptr<TerminalBase>, ParsingTable::ActionInfo> &action_info_map) {
+
+	for (auto &itr : transition_map) {
+		auto &termnon = itr.first;
+		auto &state = itr.second;
+
+		if (termnon->isTerminal() == true) {
+			action_info_map[termnon] =
+				ParsingTable::ActionInfo(
+					ParsingTable::ActionInfo::SHIFT, state_idx_map.at(state));
+		}else {
+			action_info_map[termnon] =
+				ParsingTable::ActionInfo(
+					ParsingTable::ActionInfo::GOTO, state_idx_map.at(state));
+		}
+	}
+}
+
+ParsingTable::ParsingTable(
+		const vector<shared_ptr<Nonterminal>> &symbols,
+		const shared_ptr<Nonterminal> &start_symbol,
+		const vector<shared_ptr<State>> &states) {
+
+	unordered_map<shared_ptr<State>, int> state_idx_map;
+	for (int si = 0; si < states.size(); ++si)
+		state_idx_map[states[si]] = si;
+
+	// rules
+	unordered_map<const Rule*, int> rule_idx_map;
+	for (auto &non : symbols) {
+		for (auto &r : non->rules) {
+			rule_idx_map[&r] = rules.size();
+			rules.push_back(&r);
+		}
+	}
+
+	// make table
+	action_info_map_list.resize(states.size());
+	for (int si = 0; si < states.size(); ++si) {
+		auto &s = states[si];
+		auto &action_info_map = action_info_map_list[si];
+
+		// make about reduce
+		_makeReduceTable(rule_idx_map, start_symbol, s->transited_configs(), action_info_map);
+		_makeReduceTable(rule_idx_map, start_symbol, s->closures()         , action_info_map);
+
+		// transition
+		_makeTransitionTable(s->transition_map(), state_idx_map, action_info_map);
+	}
 }
 
 }
