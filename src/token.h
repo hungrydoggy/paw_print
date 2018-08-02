@@ -4,7 +4,7 @@
 #include <string>
 
 
-namespace paw_print {
+namespace parse_table {
 
 using std::string;
 

@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "./src/paw_print.h"
+#include "./src/parse_table.h"
 
 
 using namespace paw_print;
@@ -12,6 +13,7 @@ using namespace paw_print;
 using std::cout;
 using std::endl;
 using std::ifstream;
+using std::to_string;
 
 static void _t_basic () {
     PawPrint pp;
@@ -151,8 +153,8 @@ static void _t_basic () {
 	assert(root["abc"]["f"][1]["second"]["value"].get(-1) == 2);
 }
 
-void _t_load_simple_obj () {
-	ifstream is("../../paw/simple.obj", std::ifstream::binary);
+static bool _loadPaw(const string &path, PawPrint &paw) {
+	ifstream is(path, std::ifstream::binary);
 
 	// get length of file:
 	is.seekg(0, is.end);
@@ -166,10 +168,20 @@ void _t_load_simple_obj () {
 	text[size + 1] = 0;
 	is.close();
 
-    PawPrint paw;
-    paw.loadText(text);
+	auto result = paw.loadText(text);
 
-    delete[] text;
+	delete[] text;
+
+	return result;
+}
+
+void _t_load_map_paws() {
+	for (int pi = 0; pi <= 4; ++pi) {
+		PawPrint paw;
+		cout << "load_map_paw : " << pi << endl;
+		auto is_ok = _loadPaw("../../paw/map_0" + to_string(pi) + ".paw", paw);
+		assert(is_ok == true);
+	}
 }
 
 void _t_load_boss_appear_snake_obj () {
@@ -232,9 +244,99 @@ void _t_load_boss_appear_snake_obj () {
     delete[] text;
 }
 
+static void _t_generateParsingTable () {
+
+	auto term_int = make_shared<Terminal>("int", Token::INT);
+	auto term_double = make_shared<Terminal>("double", Token::DOUBLE);
+	auto term_string = make_shared<Terminal>("string", Token::STRING);
+	auto term_colon = make_shared<Terminal>("colon", Token::COLON);
+	auto term_comma = make_shared<Terminal>("comma", Token::COMMA);
+	auto term_curly_open = make_shared<Terminal>("curly_open", Token::CURLY_OPEN);
+	auto term_curly_close = make_shared<Terminal>("curly_close", Token::CURLY_CLOSE);
+
+	auto non_kv = make_shared<Nonterminal>("KV");
+	auto non_map = make_shared<Nonterminal>("MAP");
+
+	auto non_kv_for_blocked_content = make_shared<Nonterminal>("KV_FOR_BLOCKED_CONTENTS");
+	auto non_map_blocked_content    = make_shared<Nonterminal>("MAP_BLOCKED_CONTENTS"   );
+
+	auto non_sequence = make_shared<Nonterminal>("SEQUENCE");
+
+	auto non_node = make_shared<Nonterminal>("NODE");
+
+	auto start = make_shared<Nonterminal>("S");
+
+	ParsingTableGenerator generator;
+	generator.addSymbol(start, true);
+	generator.addSymbol(non_kv);
+	generator.addSymbol(non_map);
+	generator.addSymbol(non_kv_for_blocked_content);
+	generator.addSymbol(non_map_blocked_content);
+	generator.addSymbol(non_sequence);
+	generator.addSymbol(non_node);
+
+	// KV
+	non_kv->rules.push_back({
+		RuleElem(non_node  , RuleElem::ANY),
+		RuleElem(term_colon, RuleElem::SAME),
+		RuleElem(non_node  , RuleElem::BIGGER),
+		});
+
+	// MAP
+	non_map->rules.push_back({
+		RuleElem(term_curly_open        , RuleElem::ANY),
+		RuleElem(non_map_blocked_content, RuleElem::ANY),
+		RuleElem(term_curly_close       , RuleElem::ANY),
+		});
+	non_map->rules.push_back({
+		RuleElem(term_curly_open , RuleElem::ANY),
+		RuleElem(term_curly_close, RuleElem::ANY),
+		});
+	non_map->rules.push_back({
+		RuleElem(non_kv , RuleElem::ANY),
+		RuleElem(non_map, RuleElem::SAME),
+		});
+	non_map->rules.push_back({
+		RuleElem(non_kv, RuleElem::ANY),
+		});
+
+	// KV_FOR_BLOCKED_CONTENT
+	non_kv_for_blocked_content->rules.push_back({
+		RuleElem(non_node  , RuleElem::ANY),
+		RuleElem(term_colon, RuleElem::ANY),
+		RuleElem(non_node  , RuleElem::ANY),
+		});
+
+	// MAP_BLOCKED_CONTENT
+	non_map_blocked_content->rules.push_back({
+		RuleElem(non_kv_for_blocked_content, RuleElem::ANY),
+		RuleElem(term_comma                , RuleElem::ANY),
+		RuleElem(non_map_blocked_content   , RuleElem::ANY),
+		});
+	non_map_blocked_content->rules.push_back({
+		RuleElem(non_kv_for_blocked_content, RuleElem::ANY),
+		});
+
+	// SEQUENCE
+
+
+	// NODE
+	non_node->rules.push_back({ RuleElem(term_int    , RuleElem::ANY), });
+	non_node->rules.push_back({ RuleElem(term_double , RuleElem::ANY), });
+	non_node->rules.push_back({ RuleElem(term_string , RuleElem::ANY), });
+	non_node->rules.push_back({ RuleElem(non_map     , RuleElem::ANY), });
+
+
+	start->rules.push_back({ RuleElem(non_node, RuleElem::ANY) });
+
+
+	generator.generateTable();
+}
+
 int main () {
     _t_basic();
-    _t_load_simple_obj();
+	_t_generateParsingTable();
+	//_t_load_map_paws();
     //_t_load_boss_appear_snake_obj();
     return 0;
 }

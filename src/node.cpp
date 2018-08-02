@@ -6,7 +6,7 @@
 #include <set>
 
 
-namespace paw_print {
+namespace parse_table {
 
 using std::cout;
 using std::endl;
@@ -78,7 +78,7 @@ static bool _checkNode (
         Node *node) {
 
 	if (token_idx >= tokens.size())
-		return _checkNextRule(history_map, text, tokens, node);
+		return _checkNextRule(history_map, text, tokens, node->parent());
 
     node->token_idx(token_idx);
 	auto &token = tokens[token_idx];
@@ -128,9 +128,9 @@ static bool _checkNode (
 			auto non = dynamic_pointer_cast<Nonterminal>(node->parent()->termnon());
 			_addToHistory(
 					history_map,
-					node->token_idx(),
+					node->parent()->children()[0]->token_idx(),
 					_makeRuleKey(non->no(), node->parent()->rule_idx()));
-            return _checkNextRule(history_map, text, tokens, node->parent());
+            return _checkNextRule(history_map, text, tokens, node->findPrePriorityNode());
         }
 
 
@@ -248,24 +248,24 @@ void TerminalBase::_init () {
 
 	// MAP
     non_map->rules.push_back({ 
-			RuleElem(term_curly_open , RuleElem::ANY),
-			RuleElem(term_curly_close, RuleElem::ANY),
-        });
-    non_map->rules.push_back({ 
 			RuleElem(term_curly_open        , RuleElem::ANY),
 			RuleElem(non_map_blocked_content, RuleElem::ANY),
 			RuleElem(term_curly_close       , RuleElem::ANY),
         });
     non_map->rules.push_back({ 
-            RuleElem(non_kv, RuleElem::ANY),
+			RuleElem(term_curly_open , RuleElem::ANY),
+			RuleElem(term_curly_close, RuleElem::ANY),
         });
     non_map->rules.push_back({ 
             RuleElem(non_kv , RuleElem::ANY ),
             RuleElem(non_map, RuleElem::SAME),
         });
+    non_map->rules.push_back({ 
+            RuleElem(non_kv, RuleElem::ANY),
+        });
 	
 	// KV_FOR_BLOCKED_CONTENT
-    non_kv->rules.push_back({
+	non_kv_for_blocked_content->rules.push_back({
             RuleElem(non_node  , RuleElem::ANY),
             RuleElem(term_colon, RuleElem::ANY),
             RuleElem(non_node  , RuleElem::ANY),
@@ -274,28 +274,22 @@ void TerminalBase::_init () {
 	// MAP_BLOCKED_CONTENT
 	non_map_blocked_content->rules.push_back({
             RuleElem(non_kv_for_blocked_content, RuleElem::ANY),
-		});
-	non_map_blocked_content->rules.push_back({
-            RuleElem(non_kv_for_blocked_content, RuleElem::ANY),
 			RuleElem(term_comma                , RuleElem::ANY),
 			RuleElem(non_map_blocked_content   , RuleElem::ANY),
 		});
+	non_map_blocked_content->rules.push_back({
+            RuleElem(non_kv_for_blocked_content, RuleElem::ANY),
+		});
 	
 	// SEQUENCE
-    non_sequence->rules.push_back({ 
-            RuleElem(non_kv, RuleElem::ANY),
-        });
-	non_sequence->rules.push_back({
-            RuleElem(non_kv , RuleElem::ANY ),
-            RuleElem(non_map, RuleElem::SAME),
-        });
     
 
+	// NODE
     non_node->rules.push_back({ RuleElem(term_int    , RuleElem::ANY), });
     non_node->rules.push_back({ RuleElem(term_double , RuleElem::ANY), });
     non_node->rules.push_back({ RuleElem(term_string , RuleElem::ANY), });
     non_node->rules.push_back({ RuleElem(non_map     , RuleElem::ANY), });
-            //RuleElem(non_sequence, RuleElem::ANY),
+
 
     start_ = make_shared<Nonterminal>("S");
     start_->rules.push_back({ RuleElem(non_node, RuleElem::ANY) });

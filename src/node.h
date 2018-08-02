@@ -9,7 +9,7 @@
 #include "./token.h"
 
 
-namespace paw_print {
+namespace parse_table {
 
 using std::make_shared;
 using std::shared_ptr;

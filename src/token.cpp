@@ -3,7 +3,7 @@
 #include <sstream>
 
 
-namespace paw_print {
+namespace parse_table {
 
 using std::stringstream;
 

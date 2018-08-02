@@ -1,10 +1,6 @@
-#ifndef PAW_PRINT_UNDEFINES
-#define PAW_PRINT_UNDEFINES
-
 
 #undef PAW_GETTER
 #undef PAW_SETTER
 #undef PAW_GETTER_SETTER
+#undef PAW_PRINT_DEFINES
 
-
-#endif
