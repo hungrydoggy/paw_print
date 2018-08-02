@@ -343,7 +343,7 @@ static void _t_generateParsingTable () {
 		Rule(start, { RuleElem(non_node, RuleElem::ANY) }));
 
 
-	generator.generateTable();
+	auto parsing_table = generator.generateTable();
 }
 
 int main () {

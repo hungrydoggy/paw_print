@@ -372,7 +372,7 @@ shared_ptr<ParsingTable> ParsingTableGenerator::generateTable () {
 	}
 
 	// make parsing table
-	return make_shared<ParsingTable>(symbols_, start_symbol_, states_);
+	return make_shared<ParsingTable>(symbols_, s_prime, states_);
 }
 
 
@@ -443,6 +443,10 @@ ParsingTable::ParsingTable(
 
 	// rules
 	unordered_map<const Rule*, int> rule_idx_map;
+	for (auto &r : start_symbol->rules) {
+		rule_idx_map[&r] = rules.size();
+		rules.push_back(&r);
+	}
 	for (auto &non : symbols) {
 		for (auto &r : non->rules) {
 			rule_idx_map[&r] = rules.size();
