@@ -54,7 +54,7 @@ public:
 	PAW_GETTER_SETTER(const string &, name)
 	PAW_GETTER(const vector<shared_ptr<Configuration>>&, transited_configs)
 	PAW_GETTER(const vector<shared_ptr<Configuration>>&, closures)
-	inline unordered_map<shared_ptr<TerminalBase>, shared_ptr<State>>& transition_map () { return transition_map_; }
+	inline unordered_map<TerminalBase*, shared_ptr<State>>& transition_map () { return transition_map_; }
 
 	State (
 			const vector<shared_ptr<Configuration>> &transited_configs,
@@ -67,7 +67,7 @@ private:
 	string name_;
 	vector<shared_ptr<Configuration>> transited_configs_;
 	vector<shared_ptr<Configuration>> closures_;
-	unordered_map<shared_ptr<TerminalBase>, shared_ptr<State>> transition_map_;
+	unordered_map<TerminalBase*, shared_ptr<State>> transition_map_;
 };
 
 class ParsingTable {

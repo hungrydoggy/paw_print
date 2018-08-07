@@ -205,7 +205,7 @@ void State::print () {
 
 static void _makeNextTransitionInfoMap (
 		const vector<shared_ptr<Configuration>> &configs,
-		unordered_map<shared_ptr<TerminalBase>, vector<shared_ptr<Configuration>>> &result) {
+		unordered_map<TerminalBase*, vector<shared_ptr<Configuration>>> &result) {
 
 	for (auto &c : configs) {
 		if (c->idx_after_cursor() >= c->rule().right_side.size())
@@ -213,7 +213,7 @@ static void _makeNextTransitionInfoMap (
 
 		auto &re = c->rule().right_side[c->idx_after_cursor()];
 
-		result[re.termnon].push_back(
+		result[re.termnon.get()].push_back(
 				make_shared<Configuration>(
 					c->left_side(),
 					c->rule(),
@@ -234,7 +234,7 @@ static void _addStates (
 	history.insert(base);
 
 	// make next_map
-	unordered_map<shared_ptr<TerminalBase>, vector<shared_ptr<Configuration>>> next_map;
+	unordered_map<TerminalBase*, vector<shared_ptr<Configuration>>> next_map;
 	_makeNextTransitionInfoMap(base->transited_configs(), next_map);
 	_makeNextTransitionInfoMap(base->closures()         , next_map);
 
@@ -362,7 +362,7 @@ shared_ptr<ParsingTable> ParsingTableGenerator::generateTable () {
 	for (int si = 0; si < states_.size(); ++si) {
 		auto &s = states_[si];
 		s->name("State " + to_string(si));
-		_addStates(symbols_, first_map, start_state, states_, history);
+		_addStates(symbols_, first_map, s, states_, history);
 	}
 
 	// merge states
@@ -415,7 +415,7 @@ static void _makeReduceTable (
 }
 
 static void _makeTransitionTable(
-		const unordered_map<shared_ptr<TerminalBase>, shared_ptr<State>> &transition_map,
+		const unordered_map<TerminalBase*, shared_ptr<State>> &transition_map,
 		const unordered_map<shared_ptr<State>, int> &state_idx_map,
 		unordered_map<TerminalBase*, ParsingTable::ActionInfo> &action_info_map) {
 
@@ -424,11 +424,11 @@ static void _makeTransitionTable(
 		auto &state = itr.second;
 
 		if (termnon->isTerminal() == true) {
-			action_info_map[termnon.get()] =
+			action_info_map[termnon] =
 				ParsingTable::ActionInfo(
 					ParsingTable::ActionInfo::SHIFT, state_idx_map.at(state));
 		}else {
-			action_info_map[termnon.get()] =
+			action_info_map[termnon] =
 				ParsingTable::ActionInfo(
 					ParsingTable::ActionInfo::GOTO, state_idx_map.at(state));
 		}
