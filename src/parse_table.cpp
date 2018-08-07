@@ -1,5 +1,6 @@
 #include "parse_table.h"
 
+#include <iomanip>
 #include <iostream>
 
 
@@ -10,6 +11,8 @@ using std::cout;
 using std::dynamic_pointer_cast;
 using std::endl;
 using std::make_shared;
+using std::setfill;
+using std::setw;
 using std::to_string;
 
 
@@ -363,7 +366,7 @@ shared_ptr<ParsingTable> ParsingTableGenerator::generateTable () {
 	}
 
 	// merge states
-	_mergeStates(states_, states_);
+	//_mergeStates(states_, states_);
 
 	// print states
 	for (auto &s : states_) {
@@ -391,7 +394,7 @@ static void _makeReduceTable (
 		const unordered_map<const Rule*, int> &rule_idx_map,
 		const shared_ptr<Nonterminal> &start_symbol,
 		const vector<shared_ptr<Configuration>> &configs,
-		unordered_map<shared_ptr<TerminalBase>, ParsingTable::ActionInfo> &action_info_map) {
+		unordered_map<TerminalBase*, ParsingTable::ActionInfo> &action_info_map) {
 
 	for (auto &c : configs) {
 		auto &rule = c->rule();
@@ -401,10 +404,10 @@ static void _makeReduceTable (
 		int rule_idx = rule_idx_map.at(&rule);
 		for (auto &t : c->lookahead()) {
 			if (c->left_side() == start_symbol && t == null) {
-				action_info_map[t] = ParsingTable::ActionInfo(
+				action_info_map[t.get()] = ParsingTable::ActionInfo(
 						ParsingTable::ActionInfo::ACCEPT, rule_idx);
 			}else {
-				action_info_map[t] = ParsingTable::ActionInfo(
+				action_info_map[t.get()] = ParsingTable::ActionInfo(
 						ParsingTable::ActionInfo::REDUCE, rule_idx);
 			}
 		}
@@ -414,18 +417,18 @@ static void _makeReduceTable (
 static void _makeTransitionTable(
 		const unordered_map<shared_ptr<TerminalBase>, shared_ptr<State>> &transition_map,
 		const unordered_map<shared_ptr<State>, int> &state_idx_map,
-		unordered_map<shared_ptr<TerminalBase>, ParsingTable::ActionInfo> &action_info_map) {
+		unordered_map<TerminalBase*, ParsingTable::ActionInfo> &action_info_map) {
 
 	for (auto &itr : transition_map) {
 		auto &termnon = itr.first;
 		auto &state = itr.second;
 
 		if (termnon->isTerminal() == true) {
-			action_info_map[termnon] =
+			action_info_map[termnon.get()] =
 				ParsingTable::ActionInfo(
 					ParsingTable::ActionInfo::SHIFT, state_idx_map.at(state));
 		}else {
-			action_info_map[termnon] =
+			action_info_map[termnon.get()] =
 				ParsingTable::ActionInfo(
 					ParsingTable::ActionInfo::GOTO, state_idx_map.at(state));
 		}
@@ -444,21 +447,21 @@ ParsingTable::ParsingTable(
 	// rules
 	unordered_map<const Rule*, int> rule_idx_map;
 	for (auto &r : start_symbol->rules) {
-		rule_idx_map[&r] = rules.size();
-		rules.push_back(&r);
+		rule_idx_map[&r] = rules_.size();
+		rules_.push_back(&r);
 	}
 	for (auto &non : symbols) {
 		for (auto &r : non->rules) {
-			rule_idx_map[&r] = rules.size();
-			rules.push_back(&r);
+			rule_idx_map[&r] = rules_.size();
+			rules_.push_back(&r);
 		}
 	}
 
 	// make table
-	action_info_map_list.resize(states.size());
+	action_info_map_list_.resize(states.size());
 	for (int si = 0; si < states.size(); ++si) {
 		auto &s = states[si];
-		auto &action_info_map = action_info_map_list[si];
+		auto &action_info_map = action_info_map_list_[si];
 
 		// make about reduce
 		_makeReduceTable(rule_idx_map, start_symbol, s->transited_configs(), action_info_map);
@@ -467,6 +470,100 @@ ParsingTable::ParsingTable(
 		// transition
 		_makeTransitionTable(s->transition_map(), state_idx_map, action_info_map);
 	}
+}
+
+static string _actionInfoToString (ParsingTable::ActionInfo info) {
+    switch (info.action) {
+        case ParsingTable::ActionInfo::NONE:
+            return "none";
+        case ParsingTable::ActionInfo::SHIFT:
+            return "s" + to_string(info.idx);
+        case ParsingTable::ActionInfo::REDUCE:
+            return "r" + to_string(info.idx);
+        case ParsingTable::ActionInfo::GOTO:
+            return "go" + to_string(info.idx);
+        case ParsingTable::ActionInfo::ACCEPT:
+            return "acc";
+    }
+}
+
+void ParsingTable::print () const {
+    cout << "##### Rules" << endl;
+    for (int ri=0; ri<rules_.size(); ++ri) {
+        auto &r = rules_[ri];
+        cout << "# Rule " << ri << " : ";
+        r->print();
+    }
+
+
+    cout << "##### Table" << endl;
+    set<TerminalBase*> termnon_set;
+    for (auto &action_map : action_info_map_list_) {
+        for (auto &itr : action_map)
+            termnon_set.insert(itr.first);
+    }
+
+    // make field string length map
+    unordered_map<TerminalBase*, int> field_str_length_map;
+    for (auto &termnon : termnon_set) {
+        if (termnon == null)
+            field_str_length_map[termnon] = 1;
+        else
+            field_str_length_map[termnon] = termnon->name.size();
+    }
+
+    for (auto &action_map : action_info_map_list_) {
+        for (auto &itr : action_map) {
+            auto &field_str_length = field_str_length_map[itr.first];
+            auto action_str = _actionInfoToString(itr.second);
+            field_str_length =
+                    (action_str.size() > field_str_length)?
+                        action_str.size() : field_str_length;
+        }
+    }
+
+
+    // print
+    vector<TerminalBase*> termnon_vec; // terminal first
+    for (auto &termnon : termnon_set) {
+        if (termnon == null || termnon->isTerminal() == true)
+            termnon_vec.push_back(termnon);
+    }
+    for (auto &termnon : termnon_set) {
+        if (termnon != null && termnon->isTerminal() == false)
+            termnon_vec.push_back(termnon);
+    }
+
+    
+    // field
+    int field_length = 0;
+    cout << "   " << " | "; field_length += 6;
+    for (auto &termnon : termnon_vec) {
+        auto length = field_str_length_map[termnon];
+        cout << setfill(' ') << setw(length) << ((termnon == null)? "$" : termnon->name) << " | ";
+        field_length += length + 3;
+    }
+    cout << endl;
+    for (int fi=0; fi<field_length; ++fi)
+        cout << "-";
+    cout << endl;
+
+    // content
+    for (int ai=0; ai<action_info_map_list_.size(); ++ai) {
+        cout << setfill(' ') << setw(3) << ai << " | ";
+        auto &action_map = action_info_map_list_[ai];
+        for (auto &termnon : termnon_vec) {
+            auto length = field_str_length_map[termnon];
+            if (action_map.find(termnon) == action_map.end())
+                cout << setfill(' ') << setw(length) << " " << " | ";
+            else {
+                cout << setfill(' ') << setw(length)
+                        << _actionInfoToString(action_map.at(termnon)) << " | ";
+            }
+        }
+        cout << endl;
+    }
+
 }
 
 }

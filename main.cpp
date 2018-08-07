@@ -344,6 +344,7 @@ static void _t_generateParsingTable () {
 
 
 	auto parsing_table = generator.generateTable();
+    parsing_table->print();
 }
 
 int main () {

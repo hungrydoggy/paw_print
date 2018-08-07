@@ -64,6 +64,8 @@ public:
 	vector<RuleElem> right_side;
 
 	Rule (const shared_ptr<Nonterminal> &left_side, const vector<RuleElem> &right_side);
+
+    void print () const;
 };
 
 class Terminal : public TerminalBase {

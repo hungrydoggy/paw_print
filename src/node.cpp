@@ -219,6 +219,14 @@ Rule::Rule (const shared_ptr<Nonterminal> &left_side, const vector<RuleElem> &ri
  right_side(right_side) {
 }
 
+void Rule::print () const {
+    cout << left_side->name << " -> ";
+    for (auto &re : right_side) {
+        cout << re.termnon->name << " ";
+    }
+    cout << endl;
+}
+
 void TerminalBase::_init () {
     static bool is_inited = false;
     if (is_inited == true)

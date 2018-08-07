@@ -89,13 +89,16 @@ public:
 		ActionInfo (Action action, int idx);
 	};
 
-	vector<const Rule*> rules;
-	vector<unordered_map<shared_ptr<TerminalBase>, ActionInfo>> action_info_map_list;
-
 	ParsingTable (
 			const vector<shared_ptr<Nonterminal>> &symbols,
 			const shared_ptr<Nonterminal> &start_symbol,
 			const vector<shared_ptr<State>> &states);
+
+    void print () const;
+
+private:
+	vector<const Rule*> rules_;
+	vector<unordered_map<TerminalBase*, ActionInfo>> action_info_map_list_;
 };
 
 class ParsingTableGenerator {
