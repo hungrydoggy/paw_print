@@ -16,7 +16,7 @@ using std::set;
 using std::shared_ptr;
 using std::vector;
 
-using FirstMap = unordered_map<shared_ptr<Nonterminal>, set<shared_ptr<Terminal>>>;
+using FirstMap = unordered_map<RuleElem, set<RuleElem>, RuleElem::hash>;
 
 
 class Configuration {
@@ -25,14 +25,14 @@ public:
 	PAW_GETTER(const Rule&, rule)
 	PAW_GETTER(int, idx_after_cursor)
 
-	inline set<shared_ptr<Terminal>>& lookahead () { return lookahead_; }
+	inline set<RuleElem>& lookahead () { return lookahead_; }
 
 
 	Configuration (
 			const shared_ptr<Nonterminal> &left_side,
 			const Rule &rule,
 			int idx_after_cursor,
-			const set<shared_ptr<Terminal>> &lookahead);
+			const set<RuleElem> &lookahead);
 
 	void print ();
 
@@ -41,7 +41,7 @@ private:
 	shared_ptr<Nonterminal> left_side_;
 	const Rule &rule_;
 	int idx_after_cursor_;
-	set<shared_ptr<Terminal>> lookahead_; // null means end($)
+	set<RuleElem> lookahead_; // null means end($)
 };
 
 class State {
@@ -54,7 +54,9 @@ public:
 	PAW_GETTER_SETTER(const string &, name)
 	PAW_GETTER(const vector<shared_ptr<Configuration>>&, transited_configs)
 	PAW_GETTER(const vector<shared_ptr<Configuration>>&, closures)
-	inline unordered_map<TerminalBase*, shared_ptr<State>>& transition_map () { return transition_map_; }
+	inline unordered_map<RuleElem, shared_ptr<State>, RuleElem::hash>& transition_map () {
+        return transition_map_;
+    }
 
 	State (
 			const vector<shared_ptr<Configuration>> &transited_configs,
@@ -67,7 +69,7 @@ private:
 	string name_;
 	vector<shared_ptr<Configuration>> transited_configs_;
 	vector<shared_ptr<Configuration>> closures_;
-	unordered_map<TerminalBase*, shared_ptr<State>> transition_map_;
+	unordered_map<RuleElem, shared_ptr<State>, RuleElem::hash> transition_map_;
 };
 
 class ParsingTable {
@@ -98,7 +100,7 @@ public:
 
 private:
 	vector<const Rule*> rules_;
-	vector<unordered_map<TerminalBase*, ActionInfo>> action_info_map_list_;
+	vector<unordered_map<RuleElem, ActionInfo, RuleElem::hash>> action_info_map_list_;
 };
 
 class ParsingTableGenerator {
@@ -115,6 +117,7 @@ private:
 	vector<shared_ptr<Nonterminal>> symbols_;
 	shared_ptr<Nonterminal> start_symbol_;
 	vector<shared_ptr<State>> states_;
+    set<RuleElem> rule_elements_;
 };
 
 #include "undefines.h"

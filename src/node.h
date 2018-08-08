@@ -50,12 +50,21 @@ public:
         BIGGER,
     };
 
+    struct hash {
+        std::size_t operator () (const RuleElem &re) const;
+    };
+
     shared_ptr<TerminalBase> termnon;
     IndentType indent_type;
 
     RuleElem (const shared_ptr<TerminalBase> &termnon, IndentType indent_type)
     :termnon(termnon), indent_type(indent_type) {
     }
+
+    bool operator < (const RuleElem &other) const;
+    bool operator == (const RuleElem &other) const;
+
+    string toString () const;
 };
 
 class Rule {

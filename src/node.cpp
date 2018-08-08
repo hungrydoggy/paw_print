@@ -423,4 +423,37 @@ Node* Node::findNextLeafNode () {
     }
 }
 
+std::size_t RuleElem::hash:: operator () (const RuleElem &re) const {
+    return std::hash<TerminalBase*>()(re.termnon.get()) + (size_t)re.indent_type;
+}
+
+bool RuleElem:: operator < (const RuleElem &other) const {
+    auto a_p = (uint64_t)(void*)this->termnon.get();
+    auto b_p = (uint64_t)(void*)other.termnon.get();
+    if (a_p < b_p)
+        return true;
+    else if (a_p == b_p)
+        return this->indent_type < other.indent_type;
+    else
+        return false;
+}
+
+bool RuleElem:: operator == (const RuleElem &other) const {
+    if (this->termnon.get() != other.termnon.get())
+        return false;
+
+    return this->indent_type == other.indent_type;
+}
+
+string RuleElem::toString () const {
+    string result = ((termnon == null)? "$": termnon->name);
+    switch (indent_type) {
+        case RuleElem::ANY    : result += "*"; break;
+        case RuleElem::SAME   : result += "="; break;
+        case RuleElem::SMALLER: result += "<"; break;
+        case RuleElem::BIGGER : result += ">"; break;
+    }
+    return result;
+}
+
 }
