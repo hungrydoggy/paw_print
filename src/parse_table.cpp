@@ -536,6 +536,11 @@ static string _actionInfoToString (ParsingTable::ActionInfo info) {
 static bool _sortFuncForTerminalBaseByString (
         const shared_ptr<TerminalBase> &a,
         const shared_ptr<TerminalBase> &b) {
+	if (a == null)
+		return true;
+	else if (b == null)
+		return false;
+
     return a->name < b->name;
 }
 
