@@ -11,6 +11,8 @@ using std::string;
 class Token {
 public:
     enum Type {
+        INDENT,
+        DEDENT,
         INT,
         DOUBLE,
         STRING,

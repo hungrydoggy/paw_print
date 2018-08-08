@@ -18,6 +18,8 @@ string Token::toString (const char *text) {
     stringstream ss;
     ss << "Token(";
     switch (type) {
+        case INDENT      : ss << "INDENT)"       ; return ss.str();
+        case DEDENT      : ss << "DEDENT)"       ; return ss.str();
         case INT         : ss << "INT, "         ; break;
         case DOUBLE      : ss << "DOUBLE, "      ; break;
         case STRING      : ss << "STRING, "      ; break;

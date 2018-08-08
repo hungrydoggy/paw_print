@@ -92,6 +92,7 @@ public:
 
 
     bool tokenize (const char *text, vector<Token> &tokens);
+    void addIndentTokens (const vector<Token> &tokens, vector<Token> &indented);
     shared_ptr<Node> parse (const char *text, const vector<Token> &tokens);
     bool loadText (const char *text);
 

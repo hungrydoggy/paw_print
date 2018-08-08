@@ -360,6 +360,25 @@ shared_ptr<Node> PawPrint::parse (const char *text, const vector<Token> &tokens)
     return node;
 }
 
+void PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &indented) {
+    if (tokens.size() <= 0)
+        return;
+
+    indented.push_back(tokens[0]);
+
+    for (int ti=1; ti<tokens.size(); ++ti) {
+        auto &pre_t = tokens[ti-1];
+        auto &t = tokens[ti];
+
+        if (t.indent < pre_t.indent)
+            indented.push_back(Token(Token::DEDENT, t.first_idx, t.last_idx, t.indent));
+        else if (t.indent > pre_t.indent)
+            indented.push_back(Token(Token::INDENT, t.first_idx, t.last_idx, t.indent));
+
+        indented.push_back(t);
+    }
+}
+
 bool PawPrint::loadText (const char *text) {
     raw_data_.clear();
 
@@ -367,6 +386,12 @@ bool PawPrint::loadText (const char *text) {
     auto is_tokenize_ok = tokenize(text, tokens);
     if (is_tokenize_ok == false)
         return false;
+
+    vector<Token> indented;
+    addIndentTokens(tokens, indented);
+
+    for (auto &t : indented)
+        cout << t.toString(text) << endl;
 
     auto node = parse(text, tokens);
     if (node == null)

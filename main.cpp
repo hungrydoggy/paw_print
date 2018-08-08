@@ -349,8 +349,8 @@ static void _t_generateParsingTable () {
 
 int main () {
     _t_basic();
-	_t_generateParsingTable();
-	//_t_load_map_paws();
+	//_t_generateParsingTable();
+	_t_load_map_paws();
     //_t_load_boss_appear_snake_obj();
     return 0;
 }
