@@ -169,8 +169,6 @@ shared_ptr<State> State::makeState(
 
 	// make nonterminal set to prevent Configuration duplicated
 	set<shared_ptr<Nonterminal>> non_set;
-	for (auto &c : transited_configs)
-		non_set.insert(c->left_side());
 
 	// make closures
 	vector<shared_ptr<Configuration>> closures;
