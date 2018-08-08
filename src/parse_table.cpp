@@ -222,30 +222,6 @@ static void _makeNextTransitionInfoMap (
 	}
 }
 
-static void _addStates (
-		const vector<shared_ptr<Nonterminal>> &symbols,
-		const FirstMap &first_map,
-		const shared_ptr<State> &base,
-		vector<shared_ptr<State>> &all_states,
-		set<shared_ptr<State>> &history) {
-
-	if (history.find(base) != history.end())
-		return;
-	history.insert(base);
-
-	// make next_map
-	unordered_map<TerminalBase*, vector<shared_ptr<Configuration>>> next_map;
-	_makeNextTransitionInfoMap(base->transited_configs(), next_map);
-	_makeNextTransitionInfoMap(base->closures()         , next_map);
-
-	// make new state
-	for (auto &itr : next_map) {
-		auto new_state = State::makeState(symbols, first_map, itr.second);
-		base->transition_map()[itr.first] = new_state;
-		all_states.push_back(new_state);
-	}
-}
-
 static bool _areStatesEqual (
 		const shared_ptr<State> &state,
 		const shared_ptr<State> &other) {
@@ -329,6 +305,54 @@ static void _mergeStates (
 	result = new_states;
 }
 
+static shared_ptr<State> _findState(
+		const vector<shared_ptr<State>> &states,
+		shared_ptr<State> new_state) {
+	
+	// merge states
+	for (int si = 0; si < states.size(); ++si) {
+		auto &s = states[si];
+		if (s == null)
+			continue;
+
+		if (_areStatesEqual(s, new_state) == true)
+			return s;
+	}
+
+	return null;
+}
+
+static void _addStates(
+	const vector<shared_ptr<Nonterminal>> &symbols,
+	const FirstMap &first_map,
+	shared_ptr<State> base,
+	vector<shared_ptr<State>> &all_states,
+	set<State*> &history) {
+
+	if (history.find(base.get()) != history.end())
+		return;
+	history.insert(base.get());
+
+	// make next_map
+	unordered_map<TerminalBase*, vector<shared_ptr<Configuration>>> next_map;
+	_makeNextTransitionInfoMap(base->transited_configs(), next_map);
+	_makeNextTransitionInfoMap(base->closures(), next_map);
+
+	// make new state
+	for (auto &itr : next_map) {
+		auto new_state = State::makeState(symbols, first_map, itr.second);
+
+		auto old_one = _findState(all_states, new_state);
+		if (old_one != null)
+			base->transition_map()[itr.first] = old_one;
+		else {
+			base->transition_map()[itr.first] = new_state;
+			all_states.push_back(new_state);
+		}
+	}
+
+}
+
 shared_ptr<ParsingTable> ParsingTableGenerator::generateTable () {
 
 	if (start_symbol_ == null) {
@@ -358,7 +382,7 @@ shared_ptr<ParsingTable> ParsingTableGenerator::generateTable () {
 	states_.push_back(start_state);
 
 	// add states
-	set<shared_ptr<State>> history;
+	set<State*> history;
 	for (int si = 0; si < states_.size(); ++si) {
 		auto &s = states_[si];
 		s->name("State " + to_string(si));
@@ -366,7 +390,7 @@ shared_ptr<ParsingTable> ParsingTableGenerator::generateTable () {
 	}
 
 	// merge states
-	//_mergeStates(states_, states_);
+	_mergeStates(states_, states_);
 
 	// print states
 	for (auto &s : states_) {
