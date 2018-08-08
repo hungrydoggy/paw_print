@@ -364,15 +364,13 @@ bool PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &inde
     stack<Token::Type> block_stack;
     stack<int> indent_stack;
     
+    int pre_t_idx = 0;
     for (int ti=1; ti<tokens.size(); ++ti) {
-        auto &pre_t = tokens[ti-1];
+        auto &pre_t = tokens[pre_t_idx];
         auto &t = tokens[ti];
 
+        // close block
         switch (t.type) {
-            case Token::SQUARE_OPEN:
-            case Token::CURLY_OPEN:
-                block_stack.push(t.type);
-                break;
             case Token::SQUARE_CLOSE:
                 if (block_stack.top() != Token::SQUARE_CLOSE) {
                     // TODO err: block is not matched {t.first_idx}
@@ -389,20 +387,29 @@ bool PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &inde
                 break;
         }
 
-        if (block_stack.empty() == false)
-            continue;
-
-        if (t.indent > pre_t.indent) {
-            indented.push_back(Token(Token::INDENT, t.first_idx, t.last_idx, t.indent));
-            indent_stack.push(t.indent);
-        }else if (t.indent < pre_t.indent){
-            while (t.indent < indent_stack.top()) {
-                indented.push_back(Token(Token::DEDENT, t.first_idx, t.last_idx, t.indent));
-                indent_stack.pop();
+        // insert indent/dedent
+        if (block_stack.empty() == true) {
+            if (t.indent > pre_t.indent) {
+                indented.push_back(Token(Token::INDENT, t.first_idx, t.last_idx, t.indent));
+                indent_stack.push(t.indent);
+            }else if (t.indent < pre_t.indent){
+                while (t.indent < indent_stack.top()) {
+                    indented.push_back(Token(Token::DEDENT, t.first_idx, t.last_idx, t.indent));
+                    indent_stack.pop();
+                }
             }
         }
 
+        // open block
+        switch (t.type) {
+            case Token::SQUARE_OPEN:
+            case Token::CURLY_OPEN:
+                block_stack.push(t.type);
+                break;
+        }
+
         indented.push_back(t);
+        pre_t_idx = ti;
     }
 
     if (block_stack.empty() == false) {

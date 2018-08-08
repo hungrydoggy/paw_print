@@ -223,11 +223,15 @@ static void _makeNextTransitionInfoMap (
 
 static bool _areConfigsEqual (
         const shared_ptr<Configuration> &config,
-        const shared_ptr<Configuration> &other) {
+        const shared_ptr<Configuration> &other,
+        bool need_check_lookahead) {
 
     if (config->left_side()              != other->left_side()             ||
         config->idx_after_cursor()       != other->idx_after_cursor()      ||
         config->rule().right_side.size() != other->rule().right_side.size())
+        return false;
+
+    if (need_check_lookahead == true && config->lookahead() != other->lookahead())
         return false;
 
     auto &config_r = config->rule();
@@ -242,7 +246,8 @@ static bool _areConfigsEqual (
 
 static bool _areStatesEqual (
 		const shared_ptr<State> &state,
-		const shared_ptr<State> &other) {
+		const shared_ptr<State> &other,
+        bool need_check_lookahead) {
 
 	if (state->transited_configs().size() != other->transited_configs().size())
 		return false;
@@ -253,7 +258,7 @@ static bool _areStatesEqual (
 	for (int ci = 0; ci < state->transited_configs().size(); ++ci) {
 		auto &state_c = state->transited_configs()[ci];
 		auto &other_c = other->transited_configs()[ci];
-        if (_areConfigsEqual(state_c, other_c) == false)
+        if (_areConfigsEqual(state_c, other_c, need_check_lookahead) == false)
             return false;
 	}
 
@@ -288,7 +293,7 @@ static void _mergeStates (
 			if (other_s == null)
 				continue;
 
-			if (_areStatesEqual(s, other_s) == false)
+			if (_areStatesEqual(s, other_s, false) == false)
 				continue;
 
 
@@ -323,7 +328,7 @@ static shared_ptr<State> _findState(
 		if (s == null)
 			continue;
 
-		if (_areStatesEqual(s, new_state) == true)
+		if (_areStatesEqual(s, new_state, true) == true)
 			return s;
 	}
 
@@ -352,10 +357,6 @@ static void _addStates(
 
 		auto old_one = _findState(all_states, new_state);
 		if (old_one != null) {
-			// merge
-			_mergeStates_configs(old_one->transited_configs(), new_state->transited_configs());
-			_mergeStates_configs(old_one->closures(), new_state->closures());
-
 			base->transition_map()[itr.first] = old_one;
 		}else {
 			base->transition_map()[itr.first] = new_state;
