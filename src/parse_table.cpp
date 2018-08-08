@@ -222,6 +222,25 @@ static void _makeNextTransitionInfoMap (
 	}
 }
 
+static bool _areConfigsEqual (
+        const shared_ptr<Configuration> &config,
+        const shared_ptr<Configuration> &other) {
+
+    if (config->left_side()              != other->left_side()             ||
+        config->idx_after_cursor()       != other->idx_after_cursor()      ||
+        config->rule().right_side.size() != other->rule().right_side.size())
+        return false;
+
+    auto &config_r = config->rule();
+    auto &other_r  = other->rule();
+    for (int ri = 0; ri < config_r.right_side.size(); ++ri) {
+        if (config_r.right_side[ri].termnon != other_r.right_side[ri].termnon)
+            return false;
+    }
+
+    return true;
+}
+
 static bool _areStatesEqual (
 		const shared_ptr<State> &state,
 		const shared_ptr<State> &other) {
@@ -235,17 +254,8 @@ static bool _areStatesEqual (
 	for (int ci = 0; ci < state->transited_configs().size(); ++ci) {
 		auto &state_c = state->transited_configs()[ci];
 		auto &other_c = other->transited_configs()[ci];
-		if (state_c->left_side()              != other_c->left_side()             ||
-			state_c->idx_after_cursor()       != other_c->idx_after_cursor()      ||
-			state_c->rule().right_side.size() != other_c->rule().right_side.size())
-			return false;
-
-		auto &state_r = state_c->rule();
-		auto &other_r = other_c->rule();
-		for (int ri = 0; ri < state_r.right_side.size(); ++ri) {
-			if (state_r.right_side[ri].termnon != other_r.right_side[ri].termnon)
-				return false;
-		}
+        if (_areConfigsEqual(state_c, other_c) == false)
+            return false;
 	}
 
 	return true;
