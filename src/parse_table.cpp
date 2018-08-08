@@ -33,7 +33,7 @@ Configuration::Configuration (
 		const shared_ptr<Nonterminal> &left_side,
 		const Rule &rule,
 		int idx_after_cursor,
-		const set<RuleElem> &lookahead)
+		const set<shared_ptr<TerminalBase>> &lookahead)
 :left_side_(left_side),
  rule_(rule),
  idx_after_cursor_(idx_after_cursor),
@@ -44,10 +44,10 @@ Configuration::Configuration (
 void Configuration::print () {
 	cout << left_side_->name << " -> ";
 	for (int ri = 0; ri < rule_.right_side.size(); ++ri) {
-		auto &re = rule_.right_side[ri];
+		auto &termnon = rule_.right_side[ri];
 		if (ri == idx_after_cursor_)
 			cout << ".";
-		cout << re.termnon->name;
+		cout << termnon->name;
 		if (ri < rule_.right_side.size() - 1)
 			cout << " ";
 	}
@@ -57,13 +57,13 @@ void Configuration::print () {
 
 	cout << "  , ";
 	int li = 0;
-	for (auto &re : lookahead_) {
+	for (auto &termnon : lookahead_) {
 		if (li != 0)
 			cout << " / ";
-		if (re.termnon == null)
+		if (termnon == null)
 			cout << "$";
 		else
-			cout << re.termnon->name;
+			cout << termnon->name;
 		++li;
 	}
 
@@ -79,23 +79,23 @@ State::State (
 }
 
 static void _findFirst (
-		const RuleElem &re,
-		set<RuleElem> &result,
-		set<RuleElem> &history) {
+		const shared_ptr<TerminalBase> &termnon,
+		set<shared_ptr<TerminalBase>> &result,
+		set<shared_ptr<TerminalBase>> &history) {
 	
-	if (re.termnon->isTerminal()) {
-		result.insert(re);
+	if (termnon->isTerminal()) {
+		result.insert(termnon);
 		return;
 	}
 
 
 	// nonterminal part
-	auto non = dynamic_pointer_cast<Nonterminal>(re.termnon);
+	auto non = dynamic_pointer_cast<Nonterminal>(termnon);
 
 	// prevent infinity loop
-	if (history.find(re) != history.end())
+	if (history.find(termnon) != history.end())
 		return;
-	history.insert(re);
+	history.insert(termnon);
 
 	// find recursively
 	for (auto rule : non->rules) {
@@ -105,11 +105,11 @@ static void _findFirst (
 }
 
 static void _findFirst(
-		const RuleElem &re,
-		set<RuleElem> &result) {
+		const shared_ptr<TerminalBase> &termnon,
+		set<shared_ptr<TerminalBase>> &result) {
 
-	set<RuleElem> history;
-	return _findFirst(re, result, history);
+	set<shared_ptr<TerminalBase>> history;
+	return _findFirst(termnon, result, history);
 }
 
 static void _addClosures (
@@ -123,21 +123,21 @@ static void _addClosures (
 		return;
 
 	// find non after cursor
-	auto &re = rule.right_side[idx_after_cursor];
-	if (re.termnon->isTerminal() == true)
+	auto &termnon = rule.right_side[idx_after_cursor];
+	if (termnon->isTerminal() == true)
 		return;
-	auto non = dynamic_pointer_cast<Nonterminal>(re.termnon);
+	auto non = dynamic_pointer_cast<Nonterminal>(termnon);
 	
 
 	// make lookahead
-	set<RuleElem> lookahead;
+	set<shared_ptr<TerminalBase>> lookahead;
 	if (idx_after_cursor + 1 >= rule.right_side.size()) {
 		// if next isn't exist, use lookahead
 		lookahead = c->lookahead();
 	}else {
 		// use first(next)
 		auto &next = rule.right_side[idx_after_cursor + 1];
-		if (next.termnon->isTerminal() == true)
+		if (next->isTerminal() == true)
 			lookahead.insert(next);
 		else
 			lookahead = first_map.at(next);
@@ -197,21 +197,22 @@ void State::print () {
 
 	cout << "transition:" << endl;
 	for (auto &itr : transition_map_) {
-		cout << itr.first.toString() << " ==> " << itr.second->name() << endl;
+        auto name = (itr.first == null)? "$" : itr.first->name;
+		cout << name << " ==> " << itr.second->name() << endl;
 	}
 }
 
 static void _makeNextTransitionInfoMap (
 		const vector<shared_ptr<Configuration>> &configs,
-		unordered_map<RuleElem, vector<shared_ptr<Configuration>>, RuleElem::hash> &result) {
+		unordered_map<shared_ptr<TerminalBase>, vector<shared_ptr<Configuration>>> &result) {
 
 	for (auto &c : configs) {
 		if (c->idx_after_cursor() >= c->rule().right_side.size())
 			continue;
 
-		auto &re = c->rule().right_side[c->idx_after_cursor()];
+		auto &termnon = c->rule().right_side[c->idx_after_cursor()];
 
-		result[re].push_back(
+		result[termnon].push_back(
 				make_shared<Configuration>(
 					c->left_side(),
 					c->rule(),
@@ -232,7 +233,7 @@ static bool _areConfigsEqual (
     auto &config_r = config->rule();
     auto &other_r  = other->rule();
     for (int ri = 0; ri < config_r.right_side.size(); ++ri) {
-        if (config_r.right_side[ri].termnon != other_r.right_side[ri].termnon)
+        if (config_r.right_side[ri] != other_r.right_side[ri])
             return false;
     }
 
@@ -341,7 +342,7 @@ static void _addStates(
 	history.insert(base.get());
 
 	// make next_map
-	unordered_map<RuleElem, vector<shared_ptr<Configuration>>, RuleElem::hash> next_map;
+	unordered_map<shared_ptr<TerminalBase>, vector<shared_ptr<Configuration>>> next_map;
 	_makeNextTransitionInfoMap(base->transited_configs(), next_map);
 	_makeNextTransitionInfoMap(base->closures(), next_map);
 
@@ -374,27 +375,27 @@ shared_ptr<ParsingTable> ParsingTableGenerator::generateTable () {
     // make rule elements
     rule_elements_.clear();
     for (auto &non :  symbols_) {
-        rule_elements_.insert(RuleElem(non, RuleElem::ANY));
+        rule_elements_.insert(non);
         for (auto &rule : non->rules) {
-            for (auto &re : rule.right_side)
-                rule_elements_.insert(re);
+            for (auto &termnon : rule.right_side)
+                rule_elements_.insert(termnon);
         }
     }
 
 	// make first map
 	FirstMap first_map;
-	for (auto &re : rule_elements_) {
-		auto &first = first_map[re];
-		_findFirst(re, first);
+	for (auto &termnon : rule_elements_) {
+		auto &first = first_map[termnon];
+		_findFirst(termnon, first);
 	}
 
 
 	// make s_prime
 	auto s_prime = make_shared<Nonterminal>("S\'");
-	s_prime->rules.push_back(Rule(s_prime, { RuleElem(start_symbol_, RuleElem::ANY) }));
+	s_prime->rules.push_back(Rule(s_prime, { start_symbol_ }));
 
 	// make start state
-	set<RuleElem> start_lookahead{ RuleElem(null, RuleElem::ANY) };
+	set<shared_ptr<TerminalBase>> start_lookahead{ null };
 	vector<shared_ptr<Configuration>> start_configs {
 		make_shared<Configuration>(s_prime, s_prime->rules[0], 0, start_lookahead)
 	};
@@ -439,7 +440,7 @@ static void _makeReduceTable (
 		const unordered_map<const Rule*, int> &rule_idx_map,
 		const shared_ptr<Nonterminal> &start_symbol,
 		const vector<shared_ptr<Configuration>> &configs,
-		unordered_map<RuleElem, ParsingTable::ActionInfo, RuleElem::hash> &action_info_map) {
+		unordered_map<shared_ptr<TerminalBase>, ParsingTable::ActionInfo> &action_info_map) {
 
 	for (auto &c : configs) {
 		auto &rule = c->rule();
@@ -447,12 +448,12 @@ static void _makeReduceTable (
 			continue;
 
 		int rule_idx = rule_idx_map.at(&rule);
-		for (auto &re : c->lookahead()) {
-			if (c->left_side() == start_symbol && re.termnon == null) {
-				action_info_map[re] = ParsingTable::ActionInfo(
+		for (auto &termnon : c->lookahead()) {
+			if (c->left_side() == start_symbol && termnon == null) {
+				action_info_map[termnon] = ParsingTable::ActionInfo(
 						ParsingTable::ActionInfo::ACCEPT, rule_idx);
 			}else {
-				action_info_map[re] = ParsingTable::ActionInfo(
+				action_info_map[termnon] = ParsingTable::ActionInfo(
 						ParsingTable::ActionInfo::REDUCE, rule_idx);
 			}
 		}
@@ -460,20 +461,20 @@ static void _makeReduceTable (
 }
 
 static void _makeTransitionTable(
-		const unordered_map<RuleElem, shared_ptr<State>, RuleElem::hash> &transition_map,
+		const unordered_map<shared_ptr<TerminalBase>, shared_ptr<State>> &transition_map,
 		const unordered_map<shared_ptr<State>, int> &state_idx_map,
-		unordered_map<RuleElem, ParsingTable::ActionInfo, RuleElem::hash> &action_info_map) {
+		unordered_map<shared_ptr<TerminalBase>, ParsingTable::ActionInfo> &action_info_map) {
 
 	for (auto &itr : transition_map) {
-		auto &re    = itr.first;
-		auto &state = itr.second;
+		auto &termnon = itr.first;
+		auto &state   = itr.second;
 
-		if (re.termnon->isTerminal() == true) {
-			action_info_map[re] =
+		if (termnon->isTerminal() == true) {
+			action_info_map[termnon] =
 				ParsingTable::ActionInfo(
 					ParsingTable::ActionInfo::SHIFT, state_idx_map.at(state));
 		}else {
-			action_info_map[re] =
+			action_info_map[termnon] =
 				ParsingTable::ActionInfo(
 					ParsingTable::ActionInfo::GOTO, state_idx_map.at(state));
 		}
@@ -532,8 +533,10 @@ static string _actionInfoToString (ParsingTable::ActionInfo info) {
     }
 }
 
-static bool _sortFuncForRuleElemByString (const RuleElem &a, const RuleElem &b) {
-    return (a.toString() < b.toString());
+static bool _sortFuncForTerminalBaseByString (
+        const shared_ptr<TerminalBase> &a,
+        const shared_ptr<TerminalBase> &b) {
+    return a->name < b->name;
 }
 
 void ParsingTable::print () const {
@@ -546,16 +549,16 @@ void ParsingTable::print () const {
 
 
     cout << "##### Table" << endl;
-    set<RuleElem> rule_elem_set;
+    set<shared_ptr<TerminalBase>> rule_elem_set;
     for (auto &action_map : action_info_map_list_) {
         for (auto &itr : action_map)
             rule_elem_set.insert(itr.first);
     }
 
     // make field string length map
-    unordered_map<RuleElem, int, RuleElem::hash> field_str_length_map;
-    for (auto &re : rule_elem_set)
-        field_str_length_map[re] = re.toString().size();
+    unordered_map<shared_ptr<TerminalBase>, int> field_str_length_map;
+    for (auto &termnon : rule_elem_set)
+        field_str_length_map[termnon] = (termnon == null)? 1: termnon->name.size();
 
     for (auto &action_map : action_info_map_list_) {
         for (auto &itr : action_map) {
@@ -569,21 +572,21 @@ void ParsingTable::print () const {
 
 
     // print
-    vector<RuleElem> rule_elem_vec; // terminal first
-    for (auto &re : rule_elem_set) {
-        if (re.termnon == null || re.termnon->isTerminal() == true)
-            rule_elem_vec.push_back(re);
+    vector<shared_ptr<TerminalBase>> rule_elem_vec; // terminal first
+    for (auto &termnon : rule_elem_set) {
+        if (termnon == null || termnon->isTerminal() == true)
+            rule_elem_vec.push_back(termnon);
     }
-    sort(rule_elem_vec.begin(), rule_elem_vec.end(), _sortFuncForRuleElemByString);
+    sort(rule_elem_vec.begin(), rule_elem_vec.end(), _sortFuncForTerminalBaseByString);
 
-    vector<RuleElem> rule_elem_vec_for_non; // terminal first
-    for (auto &re : rule_elem_set) {
-        if (re.termnon != null && re.termnon->isTerminal() == false)
-            rule_elem_vec_for_non.push_back(re);
+    vector<shared_ptr<TerminalBase>> rule_elem_vec_for_non; // terminal first
+    for (auto &termnon : rule_elem_set) {
+        if (termnon != null && termnon->isTerminal() == false)
+            rule_elem_vec_for_non.push_back(termnon);
     }
     sort(   rule_elem_vec_for_non.begin(),
             rule_elem_vec_for_non.end  (),
-            _sortFuncForRuleElemByString);
+            _sortFuncForTerminalBaseByString);
     rule_elem_vec.insert(
             rule_elem_vec.end(),
             rule_elem_vec_for_non.begin(),
@@ -593,9 +596,9 @@ void ParsingTable::print () const {
     // field
     int field_length = 0;
     cout << "   " << " | "; field_length += 6;
-    for (auto &re : rule_elem_vec) {
-        auto length = field_str_length_map[re];
-        cout << setfill(' ') << setw(length) << re.toString() << " | ";
+    for (auto &termnon : rule_elem_vec) {
+        auto length = field_str_length_map[termnon];
+        cout << setfill(' ') << setw(length) << ((termnon == null)? "$": termnon->name) << " | ";
         field_length += length + 3;
     }
     cout << endl;
@@ -607,13 +610,13 @@ void ParsingTable::print () const {
     for (int ai=0; ai<action_info_map_list_.size(); ++ai) {
         cout << setfill(' ') << setw(3) << ai << " | ";
         auto &action_map = action_info_map_list_[ai];
-        for (auto &re : rule_elem_vec) {
-            auto length = field_str_length_map[re];
-            if (action_map.find(re) == action_map.end())
+        for (auto &termnon : rule_elem_vec) {
+            auto length = field_str_length_map[termnon];
+            if (action_map.find(termnon) == action_map.end())
                 cout << setfill(' ') << setw(length) << " " << " | ";
             else {
                 cout << setfill(' ') << setw(length)
-                        << _actionInfoToString(action_map.at(re)) << " | ";
+                        << _actionInfoToString(action_map.at(termnon)) << " | ";
             }
         }
         cout << endl;

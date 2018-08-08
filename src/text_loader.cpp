@@ -355,22 +355,42 @@ int PawPrint::_parse_step (const char *text, const vector<Token> &tokens, int st
     return idx + 1;
 }
 
-shared_ptr<Node> PawPrint::parse (const char *text, const vector<Token> &tokens) {
-    auto node = Node::parse(text, tokens);
-    return node;
-}
-
-void PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &indented) {
+bool PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &indented) {
     if (tokens.size() <= 0)
-        return;
+        return false;
 
     indented.push_back(tokens[0]);
 
+    stack<Token::Type> block_stack;
     stack<int> indent_stack;
     
     for (int ti=1; ti<tokens.size(); ++ti) {
         auto &pre_t = tokens[ti-1];
         auto &t = tokens[ti];
+
+        switch (t.type) {
+            case Token::SQUARE_OPEN:
+            case Token::CURLY_OPEN:
+                block_stack.push(t.type);
+                break;
+            case Token::SQUARE_CLOSE:
+                if (block_stack.top() != Token::SQUARE_CLOSE) {
+                    // TODO err: block is not matched {t.first_idx}
+                    return false;
+                }
+                block_stack.pop();
+                break;
+            case Token::CURLY_CLOSE:
+                if (block_stack.top() != Token::CURLY_CLOSE) {
+                    // TODO err: block is not matched {t.first_idx}
+                    return false;
+                }
+                block_stack.pop();
+                break;
+        }
+
+        if (block_stack.empty() == false)
+            continue;
 
         if (t.indent > pre_t.indent) {
             indented.push_back(Token(Token::INDENT, t.first_idx, t.last_idx, t.indent));
@@ -385,11 +405,18 @@ void PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &inde
         indented.push_back(t);
     }
 
+    if (block_stack.empty() == false) {
+        // TODO err: block is not ended
+        return false;
+    }
+
     auto &last_t = tokens[tokens.size() - 1];
     while (indent_stack.empty() == false) {
         indented.push_back(Token(Token::DEDENT, last_t.first_idx, last_t.last_idx, last_t.indent));
         indent_stack.pop();
     }
+
+    return true;
 }
 
 bool PawPrint::loadText (const char *text) {
@@ -406,9 +433,7 @@ bool PawPrint::loadText (const char *text) {
     for (auto &t : indented)
         cout << t.toString(text) << endl;
 
-    auto node = parse(text, tokens);
-    if (node == null)
-        return false;
+    // parse
 
 
 	// write raw_data

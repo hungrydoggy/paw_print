@@ -41,38 +41,13 @@ private:
 
 };
 
-class RuleElem {
-public:
-    enum IndentType {
-        ANY,
-        SAME,
-		SMALLER,
-        BIGGER,
-    };
-
-    struct hash {
-        std::size_t operator () (const RuleElem &re) const;
-    };
-
-    shared_ptr<TerminalBase> termnon;
-    IndentType indent_type;
-
-    RuleElem (const shared_ptr<TerminalBase> &termnon, IndentType indent_type)
-    :termnon(termnon), indent_type(indent_type) {
-    }
-
-    bool operator < (const RuleElem &other) const;
-    bool operator == (const RuleElem &other) const;
-
-    string toString () const;
-};
-
 class Rule {
 public:
 	shared_ptr<Nonterminal> left_side;
-	vector<RuleElem> right_side;
+	vector<shared_ptr<TerminalBase>> right_side;
 
-	Rule (const shared_ptr<Nonterminal> &left_side, const vector<RuleElem> &right_side);
+	Rule (  const shared_ptr<Nonterminal> &left_side,
+            const vector<shared_ptr<TerminalBase>> &right_side);
 
     void print () const;
 };
@@ -111,12 +86,11 @@ public:
 
     PAW_GETTER(Node*, parent)
     PAW_GETTER(const shared_ptr<TerminalBase>&, termnon)
-    PAW_GETTER(RuleElem::IndentType, indent_type)
     PAW_GETTER_SETTER(const int, rule_idx)
     PAW_GETTER_SETTER(const int, token_idx)
     PAW_GETTER(const vector<shared_ptr<Node>>&, children)
 
-    Node (const shared_ptr<TerminalBase>& termnon, RuleElem::IndentType indent_type);
+    Node (const shared_ptr<TerminalBase>& termnon);
 
     inline void setChild (int idx, const shared_ptr<Node> &child) {
         children_[idx] = child;
@@ -131,7 +105,6 @@ public:
 private:
     Node *parent_;
     shared_ptr<TerminalBase> termnon_;
-    RuleElem::IndentType indent_type_;
     int rule_idx_;
     int token_idx_;
     vector<shared_ptr<Node>> children_;

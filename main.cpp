@@ -260,7 +260,8 @@ static void _t_generateParsingTable () {
 	auto non_kv = make_shared<Nonterminal>("KV");
 	auto non_map = make_shared<Nonterminal>("MAP");
 
-	auto non_map_blocked    = make_shared<Nonterminal>("MAP_BLOCKED"   );
+	auto non_kv_blocked  = make_shared<Nonterminal>("KV_BLOCKED" );
+	auto non_map_blocked = make_shared<Nonterminal>("MAP_BLOCKED");
 
 	auto non_sequence = make_shared<Nonterminal>("SEQUENCE");
 
@@ -272,49 +273,50 @@ static void _t_generateParsingTable () {
 	generator.addSymbol(start, true);
 	generator.addSymbol(non_kv);
 	generator.addSymbol(non_map);
-	//generator.addSymbol(non_map_blocked);
-	//generator.addSymbol(non_sequence);
+    generator.addSymbol(non_kv_blocked);
+	generator.addSymbol(non_map_blocked);
+	generator.addSymbol(non_sequence);
 	generator.addSymbol(non_node);
 
 	// KV
 	non_kv->rules.push_back(
 		Rule(non_kv, {
-			RuleElem(non_node   , RuleElem::ANY),
-			RuleElem(term_colon , RuleElem::ANY),
-			RuleElem(term_indent, RuleElem::ANY),
-			RuleElem(non_node   , RuleElem::ANY),
-			RuleElem(term_dedent, RuleElem::ANY),
+			non_node   ,
+			term_colon ,
+			term_indent,
+			non_node   ,
+			term_dedent,
 			}));
 
 	// MAP
 	non_map->rules.push_back(
-		Rule(non_map, {
-			RuleElem(non_kv , RuleElem::ANY),
-			RuleElem(non_map, RuleElem::ANY),
-			}));
+            Rule(non_map, { term_curly_open, term_curly_close }));
 	non_map->rules.push_back(
-		Rule(non_map, {
-			RuleElem(non_kv, RuleElem::ANY),
-			}));
+            Rule(non_map, { term_curly_open, non_map_blocked, term_curly_close }));
+	non_map->rules.push_back(Rule(non_map, { non_kv , non_map }));
+	non_map->rules.push_back(Rule(non_map, { non_kv           }));
 
-	// MAP_BLOCKED_CONTENT
+    // KV_BLOCKED
+    non_kv_blocked->rules.push_back(
+            Rule(non_kv_blocked, { non_node, term_colon, non_node }));
+
+	// MAP_BLOCKED
+    non_map_blocked->rules.push_back(
+            Rule(non_map_blocked, { non_kv_blocked }));
+    non_map_blocked->rules.push_back(
+            Rule(non_map_blocked, { non_kv_blocked, term_comma, non_map_blocked }));
 
 	// SEQUENCE
 
 
 	// NODE
-	non_node->rules.push_back(
-		Rule(non_node, { RuleElem(term_int   , RuleElem::ANY), }));
-	//non_node->rules.push_back(
-		//Rule(non_node, { RuleElem(term_double, RuleElem::ANY), }));
-	non_node->rules.push_back(
-		Rule(non_node, { RuleElem(term_string, RuleElem::ANY), }));
-	non_node->rules.push_back(
-		Rule(non_node, { RuleElem(non_map    , RuleElem::ANY), }));
+	non_node->rules.push_back(Rule(non_node, { term_int    }));
+	non_node->rules.push_back(Rule(non_node, { term_double }));
+	non_node->rules.push_back(Rule(non_node, { term_string }));
+	non_node->rules.push_back(Rule(non_node, { non_map     }));
 
 
-	start->rules.push_back(
-		Rule(start, { RuleElem(non_node, RuleElem::ANY) }));
+	start->rules.push_back(Rule(start, { non_node }));
 
 
 	auto parsing_table = generator.generateTable();

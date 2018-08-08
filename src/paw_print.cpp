@@ -235,5 +235,4 @@ void PawPrint::endMap () {
     *((DataType*)&raw_data_[old_size]) = Data::TYPE_MAP_END;
 }
 
-
 }

@@ -16,7 +16,7 @@ using std::set;
 using std::shared_ptr;
 using std::vector;
 
-using FirstMap = unordered_map<RuleElem, set<RuleElem>, RuleElem::hash>;
+using FirstMap = unordered_map<shared_ptr<TerminalBase>, set<shared_ptr<TerminalBase>>>;
 
 
 class Configuration {
@@ -25,14 +25,14 @@ public:
 	PAW_GETTER(const Rule&, rule)
 	PAW_GETTER(int, idx_after_cursor)
 
-	inline set<RuleElem>& lookahead () { return lookahead_; }
+	inline set<shared_ptr<TerminalBase>>& lookahead () { return lookahead_; }
 
 
 	Configuration (
 			const shared_ptr<Nonterminal> &left_side,
 			const Rule &rule,
 			int idx_after_cursor,
-			const set<RuleElem> &lookahead);
+			const set<shared_ptr<TerminalBase>> &lookahead);
 
 	void print ();
 
@@ -41,7 +41,7 @@ private:
 	shared_ptr<Nonterminal> left_side_;
 	const Rule &rule_;
 	int idx_after_cursor_;
-	set<RuleElem> lookahead_; // null means end($)
+	set<shared_ptr<TerminalBase>> lookahead_; // null means end($)
 };
 
 class State {
@@ -54,7 +54,7 @@ public:
 	PAW_GETTER_SETTER(const string &, name)
 	PAW_GETTER(const vector<shared_ptr<Configuration>>&, transited_configs)
 	PAW_GETTER(const vector<shared_ptr<Configuration>>&, closures)
-	inline unordered_map<RuleElem, shared_ptr<State>, RuleElem::hash>& transition_map () {
+	inline unordered_map<shared_ptr<TerminalBase>, shared_ptr<State>>& transition_map () {
         return transition_map_;
     }
 
@@ -69,7 +69,7 @@ private:
 	string name_;
 	vector<shared_ptr<Configuration>> transited_configs_;
 	vector<shared_ptr<Configuration>> closures_;
-	unordered_map<RuleElem, shared_ptr<State>, RuleElem::hash> transition_map_;
+	unordered_map<shared_ptr<TerminalBase>, shared_ptr<State>> transition_map_;
 };
 
 class ParsingTable {
@@ -100,7 +100,7 @@ public:
 
 private:
 	vector<const Rule*> rules_;
-	vector<unordered_map<RuleElem, ActionInfo, RuleElem::hash>> action_info_map_list_;
+	vector<unordered_map<shared_ptr<TerminalBase>, ActionInfo>> action_info_map_list_;
 };
 
 class ParsingTableGenerator {
@@ -117,7 +117,7 @@ private:
 	vector<shared_ptr<Nonterminal>> symbols_;
 	shared_ptr<Nonterminal> start_symbol_;
 	vector<shared_ptr<State>> states_;
-    set<RuleElem> rule_elements_;
+    set<shared_ptr<TerminalBase>> rule_elements_;
 };
 
 #include "undefines.h"
