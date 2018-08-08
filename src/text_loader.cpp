@@ -366,16 +366,29 @@ void PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &inde
 
     indented.push_back(tokens[0]);
 
+    stack<int> indent_stack;
+    
     for (int ti=1; ti<tokens.size(); ++ti) {
         auto &pre_t = tokens[ti-1];
         auto &t = tokens[ti];
 
-        if (t.indent < pre_t.indent)
-            indented.push_back(Token(Token::DEDENT, t.first_idx, t.last_idx, t.indent));
-        else if (t.indent > pre_t.indent)
+        if (t.indent > pre_t.indent) {
             indented.push_back(Token(Token::INDENT, t.first_idx, t.last_idx, t.indent));
+            indent_stack.push(t.indent);
+        }else if (t.indent < pre_t.indent){
+            while (t.indent < indent_stack.top()) {
+                indented.push_back(Token(Token::DEDENT, t.first_idx, t.last_idx, t.indent));
+                indent_stack.pop();
+            }
+        }
 
         indented.push_back(t);
+    }
+
+    auto &last_t = tokens[tokens.size() - 1];
+    while (indent_stack.empty() == false) {
+        indented.push_back(Token(Token::DEDENT, last_t.first_idx, last_t.last_idx, last_t.indent));
+        indent_stack.pop();
     }
 }
 

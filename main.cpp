@@ -179,7 +179,7 @@ void _t_load_map_paws() {
 	for (int pi = 0; pi <= 4; ++pi) {
 		PawPrint paw;
 		cout << "load_map_paw : " << pi << endl;
-		auto is_ok = _loadPaw("../../paw/map_0" + to_string(pi) + ".paw", paw);
+		auto is_ok = _loadPaw("../paw/map_0" + to_string(pi) + ".paw", paw);
 		assert(is_ok == true);
 	}
 }
@@ -246,6 +246,9 @@ void _t_load_boss_appear_snake_obj () {
 
 static void _t_generateParsingTable () {
 
+	auto term_indent = make_shared<Terminal>("indent", Token::INDENT);
+	auto term_dedent = make_shared<Terminal>("dedent", Token::DEDENT);
+
 	auto term_int = make_shared<Terminal>("int", Token::INT);
 	auto term_double = make_shared<Terminal>("double", Token::DOUBLE);
 	auto term_string = make_shared<Terminal>("string", Token::STRING);
@@ -278,9 +281,11 @@ static void _t_generateParsingTable () {
 	// KV
 	non_kv->rules.push_back(
 		Rule(non_kv, {
-			RuleElem(non_node  , RuleElem::ANY),
-			RuleElem(term_colon, RuleElem::SAME),
-			RuleElem(non_node  , RuleElem::BIGGER),
+			RuleElem(non_node   , RuleElem::ANY),
+			RuleElem(term_colon , RuleElem::ANY),
+			RuleElem(term_indent, RuleElem::ANY),
+			RuleElem(non_node   , RuleElem::ANY),
+			RuleElem(term_dedent, RuleElem::ANY),
 			}));
 
 	// MAP
