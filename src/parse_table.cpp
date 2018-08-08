@@ -1,5 +1,6 @@
 #include "parse_table.h"
 
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 
@@ -13,6 +14,7 @@ using std::endl;
 using std::make_shared;
 using std::setfill;
 using std::setw;
+using std::sort;
 using std::to_string;
 
 
@@ -340,13 +342,13 @@ static void _addStates(
 		auto new_state = State::makeState(symbols, first_map, itr.second);
 
 		auto old_one = _findState(all_states, new_state);
-		if (old_one != null)
+		if (old_one != null) {
 			// merge
 			_mergeStates_configs(old_one->transited_configs(), new_state->transited_configs());
-			_mergeStates_configs(old_one->closures()         , new_state->closures()         );
+			_mergeStates_configs(old_one->closures(), new_state->closures());
 
 			base->transition_map()[itr.first] = old_one;
-		else {
+		}else {
 			base->transition_map()[itr.first] = new_state;
 			all_states.push_back(new_state);
 		}
