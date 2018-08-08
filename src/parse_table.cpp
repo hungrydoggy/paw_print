@@ -307,7 +307,6 @@ static shared_ptr<State> _findState(
 		const vector<shared_ptr<State>> &states,
 		shared_ptr<State> new_state) {
 	
-	// merge states
 	for (int si = 0; si < states.size(); ++si) {
 		auto &s = states[si];
 		if (s == null)
@@ -342,6 +341,10 @@ static void _addStates(
 
 		auto old_one = _findState(all_states, new_state);
 		if (old_one != null)
+			// merge
+			_mergeStates_configs(old_one->transited_configs(), new_state->transited_configs());
+			_mergeStates_configs(old_one->closures()         , new_state->closures()         );
+
 			base->transition_map()[itr.first] = old_one;
 		else {
 			base->transition_map()[itr.first] = new_state;
