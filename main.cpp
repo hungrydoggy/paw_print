@@ -181,15 +181,23 @@ static shared_ptr<PawPrint> _loadPaw(const string &path) {
 }
 
 void _t_load_map_paws() {
-	for (int pi = 0; pi <= 4; ++pi) {
+	for (int pi = 0; pi <= 5; ++pi) {
 		cout << "load_map_paw : " << pi << endl;
+#if _WINDOWS
+		auto paw = _loadPaw("../../paw/map_0" + to_string(pi) + ".paw");
+#else
 		auto paw = _loadPaw("../paw/map_0" + to_string(pi) + ".paw");
+#endif
 		assert(paw != null);
 	}
 }
 
 static void _t_loadParsingTree () {
+#if _WINDOWS
+	ifstream f("../../paw_print.tab", std::ifstream::binary);
+#else
 	ifstream f("paw_print.tab", std::ifstream::binary);
+#endif
 
 	// get length of file:
 	f.seekg(0, f.end);

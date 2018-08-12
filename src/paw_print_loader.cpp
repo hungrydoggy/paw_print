@@ -337,30 +337,27 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
     if (tokens.size() <= 0)
         return false;
 
-    indented.push_back(tokens[0]);
-
     stack<int> block_stack;
     stack<int> indent_stack;
     
-    int pre_t_idx = 0;
-    for (int ti=1; ti<tokens.size(); ++ti) {
-        auto &pre_t = tokens[pre_t_idx];
+    int pre_t_idx = -1;
+    for (int ti=0; ti<tokens.size(); ++ti) {
         auto &t = tokens[ti];
 
         // close block
         switch (t.type) {
             case TokenType::SQUARE_CLOSE:
-                if (block_stack.top() != TokenType::SQUARE_OPEN) {
+                if (block_stack.empty() == true || block_stack.top() != TokenType::SQUARE_OPEN) {
                     // TODO err: block is not matched {t.first_idx}
-                    cout << "err: block is not matched. idx : " << t.first_idx << endl;
+                    cout << "err: block [] is not matched. idx : " << t.first_idx << endl;
                     return false;
                 }
                 block_stack.pop();
                 break;
             case TokenType::CURLY_CLOSE:
-                if (block_stack.top() != TokenType::CURLY_OPEN) {
+                if (block_stack.empty() == true || block_stack.top() != TokenType::CURLY_OPEN) {
                     // TODO err: block is not matched {t.first_idx}
-                    cout << "err: block is not matched. idx : " << t.first_idx << endl;
+                    cout << "err: block {} is not matched. idx : " << t.first_idx << endl;
                     return false;
                 }
                 block_stack.pop();
@@ -368,7 +365,8 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
         }
 
         // insert indent/dedent
-        if (block_stack.empty() == true) {
+        if (block_stack.empty() == true && pre_t_idx >= 0) {
+			auto &pre_t = tokens[pre_t_idx];
             if (t.indent > pre_t.indent) {
                 indented.push_back(Token(TokenType::INDENT, t.first_idx, t.last_idx, t.indent));
                 indent_stack.push(t.indent);
@@ -414,7 +412,11 @@ void PawPrintLoader::_initParsingTable () {
         return;
 
     // load table binary data
+#if _WINDOWS
+	ifstream f("../../paw_print.tab", ifstream::binary);
+#else
 	ifstream f("paw_print.tab", ifstream::binary);
+#endif
 
 	// get length of file
 	f.seekg(0, f.end);
@@ -482,7 +484,8 @@ shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
 
     // parse
     auto root = parsing_table_->generateParseTree(text, indented);
-    cout << root->toString(text, 0, true) << endl;
+	if (root == null)
+		return null;
 
     auto paw = make_shared<PawPrint>();
 
