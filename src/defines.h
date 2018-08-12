@@ -1,6 +1,3 @@
-#ifndef PAW_PRINT_DEFINES
-#define PAW_PRINT_DEFINES
-
 
 #define null 0
 
@@ -14,5 +11,3 @@
   PAW_GETTER(TYPE, VAR_NAME) \
   PAW_SETTER(TYPE, VAR_NAME)
 
-
-#endif

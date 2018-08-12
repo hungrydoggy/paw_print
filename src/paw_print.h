@@ -6,8 +6,8 @@
 #include <stack>
 #include <string>
 
-#include "token.h"
-#include "node.h"
+#include <token.h>
+#include <node.h>
 
 
 namespace paw_print {
@@ -21,6 +21,26 @@ using std::vector;
 using namespace parse_table;
 
 using DataType = unsigned char;
+
+class TokenType {
+public:
+    enum Type {
+        END_OF_FILE,
+        INDENT,
+        DEDENT,
+        INT,
+        DOUBLE,
+        STRING,
+        COLON,
+        COMMA,
+        DASH,
+        SHARP,
+        SQUARE_OPEN,
+        SQUARE_CLOSE,
+        CURLY_OPEN,
+        CURLY_CLOSE,
+    };
+};
 
 
 class PawPrint {
@@ -71,6 +91,8 @@ public:
         Cursor operator[] (const char *key) const;
         Cursor operator[] (const string &key) const;
 
+        const char* getKey (int idx) const;
+
         int size () const;
 
     private:
@@ -83,26 +105,26 @@ public:
         return raw_data_;
     }
 
-    PawPrint();
-    ~PawPrint();
+    PawPrint ();
+    PawPrint (const vector<unsigned char> &raw_data);
+    ~PawPrint ();
 
     DataType type (int idx) const;
 
     int dataSize (int idx) const;
 
-
-    bool tokenize (const char *text, vector<Token> &tokens);
-    bool addIndentTokens (const vector<Token> &tokens, vector<Token> &indented);
-    bool loadText (const char *text);
+    void setRawData (const vector<unsigned char> &raw_data);
 
 
     // write
     void pushInt    (int    value); 
     void pushDouble (double value); 
     void pushString (const char *value); 
+    inline void pushString (const string &value) { return pushString(value.c_str()); }
+    void pushKey (const char *value);
+    inline void pushKey (const string &value) { return pushKey(value.c_str()); }
     void beginSequence (); 
     void endSequence (); 
-    void pushKey (const char *value);
     void beginMap (); 
     void endMap (); 
 
@@ -138,10 +160,6 @@ private:
 
     stack<int> curly_open_idx_stack_;
     stack<int> square_open_idx_stack_;
-
-
-    // return next idx
-    int _parse_step (const char *text, const vector<Token> &tokens, int start_idx);
 };
 
 template<> bool PawPrint::Cursor::is<int        > () const;

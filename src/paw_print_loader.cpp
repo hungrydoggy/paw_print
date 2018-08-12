@@ -1,14 +1,22 @@
-#include "./paw_print.h"
+#include "./paw_print_loader.h"
 
+#include <fstream>
 #include <iostream>
+#include <sstream>
+
+#include "./paw_print.h"
 
 
 using std::cout;
 using std::endl;
-
+using std::ifstream;
+using std::stringstream;
 
 
 namespace paw_print {
+
+
+shared_ptr<ParsingTable> PawPrintLoader::parsing_table_;
 
 
 static bool _addNumberToken (
@@ -25,18 +33,24 @@ static bool _addNumberToken (
         if (c == '.') {
             if (point_idx <= last_idx) {
                 // TODO err not number
+                cout << "err: \'"
+                        << string(text + first_idx, last_idx - first_idx + 1)
+                        << "\' is not valid number." << endl;
                 return false;
             }
             point_idx = ci;
         }else if (c < '0' || c > '9') {
             // TODO err not number
+            cout << "err: \'"
+                    << string(text + first_idx, last_idx - first_idx + 1)
+                    << "\' is not valid number." << endl;
             return false;
         }
     }
 
 
     auto is_int = point_idx > last_idx;
-    auto type = (is_int == true)? Token::INT : Token::DOUBLE;
+    auto type = (is_int == true)? TokenType::INT : TokenType::DOUBLE;
 
     tokens.push_back(Token(type, first_idx, last_idx, indent));
 
@@ -50,7 +64,7 @@ static bool _addStringToken (
         int indent,
         vector<Token> &tokens) {
 
-    tokens.push_back(Token(Token::STRING, first_idx, last_idx, indent));
+    tokens.push_back(Token(TokenType::STRING, first_idx, last_idx, indent));
 
     return true;
 }
@@ -82,9 +96,11 @@ static int _findAndAddToken_quoted(
         switch (c) {
             case 0:
                 //TODO err text is end without closing quote
+                cout << "err: text is end without closing quote" << endl;
                 return -1;
             case '\n':
                 //TODO err text is newlined without closing quote
+                cout << "err: text is newlined without closing quote" << endl;
                 return -1;
             case '\\':
                 ++idx;
@@ -190,7 +206,7 @@ static int _findAndAddToken (
                         return -1;
                 }
 
-                tokens.push_back(Token(Token::COMMA, idx, idx, indent));
+                tokens.push_back(Token(TokenType::COMMA, idx, idx, indent));
 
                 return idx + 1;
             }
@@ -201,7 +217,7 @@ static int _findAndAddToken (
                         return -1;
                 }
 
-                tokens.push_back(Token(Token::COLON, idx, idx, indent));
+                tokens.push_back(Token(TokenType::COLON, idx, idx, indent));
 
                 indent += 4;
 
@@ -214,7 +230,7 @@ static int _findAndAddToken (
                         return -1;
                 }
 
-                tokens.push_back(Token(Token::DASH, idx, idx, indent));
+                tokens.push_back(Token(TokenType::DASH, idx, idx, indent));
 
                 return idx + 1;
             }
@@ -243,7 +259,7 @@ static int _findAndAddToken (
                         return -1;
                 }
 
-                tokens.push_back(Token(Token::CURLY_OPEN, idx, idx, indent));
+                tokens.push_back(Token(TokenType::CURLY_OPEN, idx, idx, indent));
 
                 return idx + 1;
             }
@@ -254,7 +270,7 @@ static int _findAndAddToken (
                         return -1;
                 }
 
-                tokens.push_back(Token(Token::CURLY_CLOSE, idx, idx, indent));
+                tokens.push_back(Token(TokenType::CURLY_CLOSE, idx, idx, indent));
 
                 return idx + 1;
             }
@@ -265,7 +281,7 @@ static int _findAndAddToken (
                         return -1;
                 }
 
-                tokens.push_back(Token(Token::SQUARE_OPEN, idx, idx, indent));
+                tokens.push_back(Token(TokenType::SQUARE_OPEN, idx, idx, indent));
 
                 return idx + 1;
             }
@@ -276,7 +292,7 @@ static int _findAndAddToken (
                         return -1;
                 }
 
-                tokens.push_back(Token(Token::SQUARE_CLOSE, idx, idx, indent));
+                tokens.push_back(Token(TokenType::SQUARE_CLOSE, idx, idx, indent));
 
                 return idx + 1;
             }
@@ -286,7 +302,7 @@ static int _findAndAddToken (
     return idx + 1;
 }
 
-bool PawPrint::tokenize (const char *text, vector<Token> &tokens) {
+bool PawPrintLoader::tokenize (const char *text, vector<Token> &tokens) {
     int idx = 0;
 
     // trim left and indent
@@ -317,51 +333,13 @@ bool PawPrint::tokenize (const char *text, vector<Token> &tokens) {
     return true;
 }
 
-// return next idx
-int PawPrint::_parse_step (const char *text, const vector<Token> &tokens, int start_idx) {
-    auto idx = start_idx;
-    auto &t = tokens[idx];
-    switch (t.type) {
-        case Token::INT:
-            return idx + 1;
-        case Token::DOUBLE:
-            return idx + 1;
-        case Token::STRING:
-            return idx + 1;
-        case Token::COLON:
-            return idx + 1;
-        case Token::COMMA:
-            return idx + 1;
-        case Token::DASH:
-            return idx + 1;
-        case Token::CURLY_OPEN:
-            curly_open_idx_stack_.push(idx);
-            beginMap();
-            return idx + 1;
-        case Token::CURLY_CLOSE:
-            curly_open_idx_stack_.pop();
-            endMap();
-            return idx + 1;
-        case Token::SQUARE_OPEN:
-            square_open_idx_stack_.push(idx);
-            beginSequence();
-            return idx + 1;
-        case Token::SQUARE_CLOSE:
-            square_open_idx_stack_.pop();
-            endSequence();
-            return idx + 1;
-    }
-
-    return idx + 1;
-}
-
-bool PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &indented) {
+bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token> &indented) {
     if (tokens.size() <= 0)
         return false;
 
     indented.push_back(tokens[0]);
 
-    stack<Token::Type> block_stack;
+    stack<int> block_stack;
     stack<int> indent_stack;
     
     int pre_t_idx = 0;
@@ -371,16 +349,18 @@ bool PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &inde
 
         // close block
         switch (t.type) {
-            case Token::SQUARE_CLOSE:
-                if (block_stack.top() != Token::SQUARE_CLOSE) {
+            case TokenType::SQUARE_CLOSE:
+                if (block_stack.top() != TokenType::SQUARE_OPEN) {
                     // TODO err: block is not matched {t.first_idx}
+                    cout << "err: block is not matched. idx : " << t.first_idx << endl;
                     return false;
                 }
                 block_stack.pop();
                 break;
-            case Token::CURLY_CLOSE:
-                if (block_stack.top() != Token::CURLY_CLOSE) {
+            case TokenType::CURLY_CLOSE:
+                if (block_stack.top() != TokenType::CURLY_OPEN) {
                     // TODO err: block is not matched {t.first_idx}
+                    cout << "err: block is not matched. idx : " << t.first_idx << endl;
                     return false;
                 }
                 block_stack.pop();
@@ -390,11 +370,11 @@ bool PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &inde
         // insert indent/dedent
         if (block_stack.empty() == true) {
             if (t.indent > pre_t.indent) {
-                indented.push_back(Token(Token::INDENT, t.first_idx, t.last_idx, t.indent));
+                indented.push_back(Token(TokenType::INDENT, t.first_idx, t.last_idx, t.indent));
                 indent_stack.push(t.indent);
             }else if (t.indent < pre_t.indent){
                 while (t.indent < indent_stack.top()) {
-                    indented.push_back(Token(Token::DEDENT, t.first_idx, t.last_idx, t.indent));
+                    indented.push_back(Token(TokenType::DEDENT, t.first_idx, t.last_idx, t.indent));
                     indent_stack.pop();
                 }
             }
@@ -402,8 +382,8 @@ bool PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &inde
 
         // open block
         switch (t.type) {
-            case Token::SQUARE_OPEN:
-            case Token::CURLY_OPEN:
+            case TokenType::SQUARE_OPEN:
+            case TokenType::CURLY_OPEN:
                 block_stack.push(t.type);
                 break;
         }
@@ -414,25 +394,84 @@ bool PawPrint::addIndentTokens (const vector<Token> &tokens, vector<Token> &inde
 
     if (block_stack.empty() == false) {
         // TODO err: block is not ended
+        cout << "err: block is not ended." << endl;
         return false;
     }
 
     auto &last_t = tokens[tokens.size() - 1];
     while (indent_stack.empty() == false) {
-        indented.push_back(Token(Token::DEDENT, last_t.first_idx, last_t.last_idx, last_t.indent));
+        indented.push_back(Token(TokenType::DEDENT, last_t.first_idx, last_t.last_idx, last_t.indent));
         indent_stack.pop();
     }
+
+    indented.push_back(Token(TokenType::END_OF_FILE, last_t.first_idx, last_t.last_idx, last_t.indent));
 
     return true;
 }
 
-bool PawPrint::loadText (const char *text) {
-    raw_data_.clear();
+void PawPrintLoader::_initParsingTable () {
+    if (parsing_table_ != null)
+        return;
 
+    // load table binary data
+	ifstream f("paw_print.tab", ifstream::binary);
+
+	// get length of file
+	f.seekg(0, f.end);
+	int size = f.tellg();
+	f.seekg(0, f.beg);
+    
+	// allocate memory
+    vector<unsigned char> binary;
+    binary.resize(size);
+
+	// read data
+	f.read((char*)binary.data(), size);
+	f.close();
+
+
+    parsing_table_ = make_shared<ParsingTable>(binary);
+
+
+    Token::to_string_func = [](const char *text, const Token *t) {
+        stringstream ss;
+        ss << "Token(";
+        switch (t->type) {
+            case TokenType::INDENT      : ss << "INDENT)"       ; return ss.str();
+            case TokenType::DEDENT      : ss << "DEDENT)"       ; return ss.str();
+            case TokenType::END_OF_FILE : ss << "END_OF_FILE)"  ; return ss.str();
+            case TokenType::INT         : ss << "INT, "         ; break;
+            case TokenType::DOUBLE      : ss << "DOUBLE, "      ; break;
+            case TokenType::STRING      : ss << "STRING, "      ; break;
+            case TokenType::COLON       : ss << "COLON, "       ; break;
+            case TokenType::COMMA       : ss << "COMMA, "       ; break;
+            case TokenType::DASH        : ss << "DASH, "        ; break;
+            case TokenType::SHARP       : ss << "SHARP, "       ; break;
+            case TokenType::SQUARE_OPEN : ss << "SQUARE_OPEN, " ; break;
+            case TokenType::SQUARE_CLOSE: ss << "SQUARE_CLOSE, "; break;
+            case TokenType::CURLY_OPEN  : ss << "CURLY_OPEN, "  ; break;
+            case TokenType::CURLY_CLOSE : ss << "CURLY_CLOSE, " ; break;
+        }
+
+        auto size = t->last_idx - t->first_idx + 2;
+        auto str = new char [size];
+        memcpy(str, &text[t->first_idx], size-1);
+        str[size-1] = 0;
+        ss << t->first_idx << ", " << t->last_idx << ", indent:" << t->indent
+                << ", \"" << str << "\")";
+        delete[] str;
+        return ss.str();
+    };
+}
+
+shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
+    _initParsingTable();
+
+    // tokenize
     vector<Token> tokens;
     auto is_tokenize_ok = tokenize(text, tokens);
     if (is_tokenize_ok == false)
-        return false;
+        return null;
 
     vector<Token> indented;
     addIndentTokens(tokens, indented);
@@ -440,12 +479,14 @@ bool PawPrint::loadText (const char *text) {
     for (auto &t : indented)
         cout << t.toString(text) << endl;
 
+
     // parse
+    auto root = parsing_table_->generateParseTree(text, indented);
+    cout << root->toString(text, 0, true) << endl;
 
+    auto paw = make_shared<PawPrint>();
 
-	// write raw_data
-
-    return true;
+    return paw;
 }
 
 }

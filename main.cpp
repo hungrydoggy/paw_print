@@ -2,17 +2,22 @@
 #include <assert.h>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdio.h>
 
+#include <parse_table.h>
+
 #include "./src/paw_print.h"
-#include "./src/parse_table.h"
+#include "./src/paw_print_loader.h"
 
 
 using namespace paw_print;
+using namespace parse_table;
 
 using std::cout;
 using std::endl;
 using std::ifstream;
+using std::stringstream;
 using std::to_string;
 
 static void _t_basic () {
@@ -153,7 +158,7 @@ static void _t_basic () {
 	assert(root["abc"]["f"][1]["second"]["value"].get(-1) == 2);
 }
 
-static bool _loadPaw(const string &path, PawPrint &paw) {
+static shared_ptr<PawPrint> _loadPaw(const string &path) {
 	ifstream is(path, std::ifstream::binary);
 
 	// get length of file:
@@ -168,7 +173,7 @@ static bool _loadPaw(const string &path, PawPrint &paw) {
 	text[size + 1] = 0;
 	is.close();
 
-	auto result = paw.loadText(text);
+	auto result = PawPrintLoader::loadText(text);
 
 	delete[] text;
 
@@ -177,156 +182,89 @@ static bool _loadPaw(const string &path, PawPrint &paw) {
 
 void _t_load_map_paws() {
 	for (int pi = 0; pi <= 4; ++pi) {
-		PawPrint paw;
 		cout << "load_map_paw : " << pi << endl;
-		auto is_ok = _loadPaw("../paw/map_0" + to_string(pi) + ".paw", paw);
-		assert(is_ok == true);
+		auto paw = _loadPaw("../paw/map_0" + to_string(pi) + ".paw");
+		assert(paw != null);
 	}
 }
 
-void _t_load_boss_appear_snake_obj () {
+static void _t_loadParsingTree () {
+	ifstream f("paw_print.tab", std::ifstream::binary);
 
-	ifstream is("../../paw/boss_appear_snake.obj", std::ios::binary);
 	// get length of file:
-	is.seekg(0, is.end);
-	int size = is.tellg();
-	is.seekg(0, is.beg);
-	// allocate memory:
-	char* text = new char[size + 2];
-	// read data as a block:
-	is.read(text, size);
-	text[size] = '\n';
-	text[size + 1] = 0;
-	is.close();
-
-
-    PawPrint paw;
-    vector<Token> tokens;
-    paw.tokenize(text, tokens);
-    vector<string> results = {
-        "Token(STRING, 1, 33, indent:0)        @objects/ui/popup/boss_appear.obj",
-        "Token(COLON, 35, 35, indent:0)        :",
-        "Token(STRING, 41, 43, indent:4)        ref",
-        "Token(COLON, 44, 44, indent:4)        :",
-        "Token(STRING, 55, 62, indent:8)        boss_img",
-        "Token(COLON, 64, 64, indent:8)        :",
-        "Token(STRING, 67, 95, indent:12)        images/ui/popup/snake_art.png",
-        "Token(STRING, 107, 114, indent:8)        icon_img",
-        "Token(COLON, 116, 116, indent:8)        :",
-        "Token(STRING, 119, 164, indent:12)        images/status/icons/inven_ico_snake_poison.png",
-        "Token(STRING, 176, 183, indent:8)        icon_siz",
-        "Token(COLON, 185, 185, indent:8)        :",
-        "Token(SQUARE_OPEN, 187, 187, indent:12)        [",
-        "Token(INT, 188, 189, indent:12)        79",
-        "Token(COMMA, 190, 190, indent:12)        ,",
-        "Token(INT, 192, 192, indent:12)        0",
-        "Token(SQUARE_CLOSE, 193, 193, indent:12)        ]",
-        "Token(STRING, 204, 211, indent:8)        icon_pos",
-        "Token(COLON, 213, 213, indent:8)        :",
-        "Token(DASH, 227, 227, indent:12)        -",
-        "Token(INT, 229, 229, indent:12)        0",
-        "Token(DASH, 243, 243, indent:12)        -",
-        "Token(DOUBLE, 245, 248, indent:12)        10.5",
-        "Token(DASH, 262, 262, indent:12)        -",
-        "Token(INT, 264, 264, indent:12)        1",
-    };
-    assert(tokens.size() == results.size());
-
-    for (int ti=0; ti<tokens.size(); ++ti) {
-        auto s = tokens[ti].toString(text);
-        assert(s == results[ti]);
-    }
+	f.seekg(0, f.end);
+	int size = f.tellg();
+	f.seekg(0, f.beg);
     
+	// allocate memory:
+    vector<unsigned char> binary;
+    binary.resize(size);
 
-    paw.loadText(text);
+	// read data as a block:
+	f.read((char*)binary.data(), size);
+	f.close();
 
+    auto table = ParsingTable(binary);
+    //cout << table.toString();
+    auto table_correct = 
+		"##### Rules\n" \
+		"# Rule 0 : S' -> S \n" \
+		"# Rule 1 : S -> NODE \n" \
+		"# Rule 2 : KV -> string colon #indent NODE #dedent \n" \
+		"# Rule 3 : MAP -> curly_open curly_close \n" \
+		"# Rule 4 : MAP -> curly_open MAP_BLOCKED curly_close \n" \
+		"# Rule 5 : MAP -> KV MAP \n" \
+		"# Rule 6 : MAP -> KV \n" \
+		"# Rule 7 : KV_BLOCKED -> string colon NODE \n" \
+		"# Rule 8 : MAP_BLOCKED -> KV_BLOCKED \n" \
+		"# Rule 9 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED \n" \
+		"# Rule 10 : SEQ_ELEM -> dash NODE \n" \
+		"# Rule 11 : SEQUENCE -> SEQ_ELEM SEQUENCE \n" \
+		"# Rule 12 : SEQUENCE -> SEQ_ELEM \n" \
+		"# Rule 13 : NODE -> int \n" \
+		"# Rule 14 : NODE -> double \n" \
+		"# Rule 15 : NODE -> string \n" \
+		"# Rule 16 : NODE -> MAP \n" \
+		"# Rule 17 : NODE -> SEQUENCE \n" \
+		"##### Table\n" \
+		"    |   $ | #dedent | #indent | colon | comma | curly_close | curly_open | dash | double | int | string |  KV | KV_BLOCKED |  MAP | MAP_BLOCKED | NODE |    S | SEQUENCE | SEQ_ELEM | \n" \
+		"--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n" \
+		"  0 |     |         |         |       |       |             |         s5 |   s4 |     s2 |  s1 |     s3 | go6 |            |  go7 |             | go10 | go11 |      go9 |      go8 | \n" \
+		"  1 | r13 |     r13 |         |       |   r13 |         r13 |            |  r13 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		"  2 | r14 |     r14 |         |       |   r14 |         r14 |            |  r14 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		"  3 | r15 |     r15 |         |   s12 |   r15 |         r15 |            |  r15 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		"  4 |     |         |         |       |       |             |         s5 |   s4 |     s2 |  s1 |     s3 | go6 |            |  go7 |             | go13 |      |      go9 |      go8 | \n" \
+		"  5 |     |         |         |       |       |         s15 |            |      |        |     |    s14 |     |       go16 |      |        go17 |      |      |          |          | \n" \
+		"  6 |  r6 |      r6 |         |       |    r6 |          r6 |         s5 |   r6 |        |     |    s18 | go6 |            | go19 |             |      |      |          |          | \n" \
+		"  7 | r16 |     r16 |         |       |   r16 |         r16 |            |  r16 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		"  8 | r12 |     r12 |         |       |   r12 |         r12 |            |   s4 |        |     |        |     |            |      |             |      |      |     go20 |      go8 | \n" \
+		"  9 | r17 |     r17 |         |       |   r17 |         r17 |            |  r17 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 10 |  r1 |         |         |       |       |             |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 11 | acc |         |         |       |       |             |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 12 |     |         |     s21 |       |       |             |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 13 | r10 |     r10 |         |       |   r10 |         r10 |            |  r10 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 14 |     |         |         |   s22 |       |             |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 15 |  r3 |      r3 |         |       |    r3 |          r3 |            |   r3 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 16 |     |         |         |       |   s23 |          r8 |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 17 |     |         |         |       |       |         s24 |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 18 |     |         |         |   s12 |       |             |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 19 |  r5 |      r5 |         |       |    r5 |          r5 |            |   r5 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 20 | r11 |     r11 |         |       |   r11 |         r11 |            |  r11 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 21 |     |         |         |       |       |             |         s5 |   s4 |     s2 |  s1 |     s3 | go6 |            |  go7 |             | go25 |      |      go9 |      go8 | \n" \
+		" 22 |     |         |         |       |       |             |         s5 |   s4 |     s2 |  s1 |     s3 | go6 |            |  go7 |             | go26 |      |      go9 |      go8 | \n" \
+		" 23 |     |         |         |       |       |             |            |      |        |     |    s14 |     |       go16 |      |        go27 |      |      |          |          | \n" \
+		" 24 |  r4 |      r4 |         |       |    r4 |          r4 |            |   r4 |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 25 |     |     s28 |         |       |       |             |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 26 |     |         |         |       |    r7 |          r7 |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 27 |     |         |         |       |       |          r9 |            |      |        |     |        |     |            |      |             |      |      |          |          | \n" \
+		" 28 |  r2 |      r2 |         |       |    r2 |          r2 |         r2 |   r2 |        |     |     r2 |     |            |      |             |      |      |          |          | \n";
+    assert(table.toString() == table_correct);
 
-    delete[] text;
-}
-
-static void _t_generateParsingTable () {
-
-	auto term_indent = make_shared<Terminal>("#indent", Token::INDENT);
-	auto term_dedent = make_shared<Terminal>("#dedent", Token::DEDENT);
-
-	auto term_int = make_shared<Terminal>("int", Token::INT);
-	auto term_double = make_shared<Terminal>("double", Token::DOUBLE);
-	auto term_string = make_shared<Terminal>("string", Token::STRING);
-	auto term_colon = make_shared<Terminal>("colon", Token::COLON);
-	auto term_comma = make_shared<Terminal>("comma", Token::COMMA);
-	auto term_curly_open = make_shared<Terminal>("curly_open", Token::CURLY_OPEN);
-	auto term_curly_close = make_shared<Terminal>("curly_close", Token::CURLY_CLOSE);
-
-	auto non_kv = make_shared<Nonterminal>("KV");
-	auto non_map = make_shared<Nonterminal>("MAP");
-
-	auto non_kv_blocked  = make_shared<Nonterminal>("KV_BLOCKED" );
-	auto non_map_blocked = make_shared<Nonterminal>("MAP_BLOCKED");
-
-	auto non_sequence = make_shared<Nonterminal>("SEQUENCE");
-
-	auto non_node = make_shared<Nonterminal>("NODE");
-
-	auto start = make_shared<Nonterminal>("S");
-
-	ParsingTableGenerator generator;
-	generator.addSymbol(start, true);
-	generator.addSymbol(non_kv);
-	generator.addSymbol(non_map);
-    generator.addSymbol(non_kv_blocked);
-	generator.addSymbol(non_map_blocked);
-	generator.addSymbol(non_sequence);
-	generator.addSymbol(non_node);
-
-	// KV
-	non_kv->rules.push_back(
-		Rule(non_kv, {
-			non_node   ,
-			term_colon ,
-			term_indent,
-			non_node   ,
-			term_dedent,
-			}));
-
-	// MAP
-	non_map->rules.push_back(
-            Rule(non_map, { term_curly_open, term_curly_close }));
-	non_map->rules.push_back(
-            Rule(non_map, { term_curly_open, non_map_blocked, term_curly_close }));
-	non_map->rules.push_back(Rule(non_map, { non_kv , non_map }));
-	non_map->rules.push_back(Rule(non_map, { non_kv           }));
-
-    // KV_BLOCKED
-    non_kv_blocked->rules.push_back(
-            Rule(non_kv_blocked, { non_node, term_colon, non_node }));
-
-	// MAP_BLOCKED
-    non_map_blocked->rules.push_back(
-            Rule(non_map_blocked, { non_kv_blocked }));
-    non_map_blocked->rules.push_back(
-            Rule(non_map_blocked, { non_kv_blocked, term_comma, non_map_blocked }));
-
-	// SEQUENCE
-
-
-	// NODE
-	non_node->rules.push_back(Rule(non_node, { term_int    }));
-	non_node->rules.push_back(Rule(non_node, { term_double }));
-	non_node->rules.push_back(Rule(non_node, { term_string }));
-	non_node->rules.push_back(Rule(non_node, { non_map     }));
-
-
-	start->rules.push_back(Rule(start, { non_node }));
-
-
-	auto parsing_table = generator.generateTable();
-    parsing_table->print();
 }
 
 int main () {
     _t_basic();
-	_t_generateParsingTable();
-	//_t_load_map_paws();
-    //_t_load_boss_appear_snake_obj();
+    _t_loadParsingTree();
+	_t_load_map_paws();
     return 0;
 }

@@ -12,6 +12,11 @@ PawPrint::PawPrint ()
 :is_closed_(false) {
 }
 
+PawPrint::PawPrint (const vector<unsigned char> &raw_data)
+:PawPrint() {
+    setRawData(raw_data);
+}
+
 PawPrint::~PawPrint () {
 }
 
@@ -233,6 +238,10 @@ void PawPrint::endMap () {
     int old_size = raw_data_.size();
     raw_data_.resize(old_size + sizeof(DataType));
     *((DataType*)&raw_data_[old_size]) = Data::TYPE_MAP_END;
+}
+
+void PawPrint::setRawData (const vector<unsigned char> &raw_data) {
+    raw_data_ = raw_data;
 }
 
 }
