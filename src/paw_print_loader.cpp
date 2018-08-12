@@ -466,6 +466,13 @@ void PawPrintLoader::_initParsingTable () {
     };
 }
 
+static void _parseNode (
+		const shared_ptr<PawPrint> &paw,
+		const shared_ptr<Node> &node) {
+
+	
+}
+
 shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
     _initParsingTable();
 
@@ -488,6 +495,7 @@ shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
 		return null;
 
     auto paw = make_shared<PawPrint>();
+	_parseNode(paw, root);
 
     return paw;
 }

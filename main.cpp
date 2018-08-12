@@ -213,7 +213,7 @@ static void _t_loadParsingTree () {
 	f.close();
 
     auto table = ParsingTable(binary);
-    //cout << table.toString();
+    cout << table.toString();
     auto table_correct = 
 		"##### Rules\n" \
 		"# Rule 0 : S' -> S \n" \
