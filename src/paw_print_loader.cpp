@@ -10,6 +10,7 @@
 using std::cout;
 using std::endl;
 using std::ifstream;
+using std::istringstream;
 using std::stringstream;
 
 
@@ -17,6 +18,12 @@ namespace paw_print {
 
 
 shared_ptr<ParsingTable> PawPrintLoader::parsing_table_;
+
+
+static void _parseNode (
+        const char *text,
+		const shared_ptr<PawPrint> &paw,
+		const shared_ptr<Node> &node);
 
 
 static bool _addNumberToken (
@@ -466,11 +473,306 @@ void PawPrintLoader::_initParsingTable () {
     };
 }
 
+
+using LoaderFunc = function<
+        void (
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node)>;
+vector<LoaderFunc> loader_funcs;
+
+static void _initLoaders () {
+    if (loader_funcs.size() > 0)
+        return;
+
+    // Rule 0 : S' -> S 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+    });
+
+    // Rule 1 : S -> NODE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+    });
+
+    // Rule 2 : KV -> string colon #indent NODE #dedent 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        paw->pushKeyValuePair();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[3]);
+    });
+
+    // Rule 3 : MAP -> curly_open curly_close 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        paw->beginMap();
+        paw->endMap();
+    });
+
+    // Rule 4 : MAP -> curly_open MAP_BLOCKED curly_close 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[1]);
+
+        paw->endMap();
+    });
+
+    // Rule 5 : MAP -> KV MAP 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 5;
+
+        if (need_wrap == true)
+            paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[1]);
+
+        if (need_wrap == true)
+            paw->endMap();
+    });
+
+    // Rule 6 : MAP -> KV 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 5;
+
+        if (need_wrap == true)
+            paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+
+        if (need_wrap == true)
+            paw->endMap();
+    });
+
+    // Rule 7 : KV_BLOCKED -> string colon NODE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        paw->pushKeyValuePair();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[2]);
+    });
+
+    // Rule 8 : MAP_BLOCKED -> KV_BLOCKED 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 9;
+
+        if (need_wrap == true)
+            paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+
+        if (need_wrap == true)
+            paw->endMap();
+    });
+
+    // Rule 9 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 9;
+
+        if (need_wrap == true)
+            paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[2]);
+
+        if (need_wrap == true)
+            paw->endMap();
+    });
+
+    // Rule 10 : SEQ_ELEM -> dash NODE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[1]);
+    });
+
+    // Rule 11 : SEQUENCE -> SEQ_ELEM SEQUENCE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 11;
+
+        if (need_wrap == true)
+            paw->beginSequence();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[1]);
+
+        if (need_wrap == true)
+            paw->endSequence();
+    });
+
+    // Rule 12 : SEQUENCE -> SEQ_ELEM 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 11;
+
+        if (need_wrap == true)
+            paw->beginSequence();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+
+        if (need_wrap == true)
+            paw->endSequence();
+    });
+
+    // Rule 13 : NODE -> int 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        auto token = children[0]->token();
+        istringstream iss(
+                string(
+                    text + token->first_idx,
+                    token->last_idx - token->first_idx + 1));
+        int v = 0;
+        iss >> v;
+        paw->pushInt(v);
+    });
+
+    // Rule 14 : NODE -> double 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        auto token = children[0]->token();
+        istringstream iss(
+                string(
+                    text + token->first_idx,
+                    token->last_idx - token->first_idx + 1));
+        double v = 0;
+        iss >> v;
+        paw->pushDouble(v);
+    });
+
+    // Rule 15 : NODE -> string 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        auto token = children[0]->token();
+        paw->pushString(
+                string(
+                    text + token->first_idx,
+                    token->last_idx - token->first_idx + 1));
+    });
+
+    // Rule 16 : NODE -> MAP 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+    });
+
+    // Rule 17 : NODE -> SEQUENCE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+    });
+
+}
+
+static LoaderFunc getLoader (int rule_idx) {
+    _initLoaders();
+
+    if (rule_idx < 0 || rule_idx >= loader_funcs.size())
+        return null;
+    return loader_funcs[rule_idx];
+}
+
 static void _parseNode (
+        const char *text,
 		const shared_ptr<PawPrint> &paw,
 		const shared_ptr<Node> &node) {
 
-	
+    if (node->termnon()->isTerminal() == true)
+        return;
+
+	auto loader = getLoader(node->reduced_rule_idx());
+    if (loader == null) {
+        // TODO err: can not parse node
+        cout << "err: can not parse node \""
+                << node->toString(text) << "\" by rule_idx : "
+                << node->reduced_rule_idx()
+                << endl;
+        return;
+    }
+    
+    return loader(text, paw, node);
 }
 
 shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
@@ -485,9 +787,6 @@ shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
     vector<Token> indented;
     addIndentTokens(tokens, indented);
 
-    for (auto &t : indented)
-        cout << t.toString(text) << endl;
-
 
     // parse
     auto root = parsing_table_->generateParseTree(text, indented);
@@ -495,7 +794,7 @@ shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
 		return null;
 
     auto paw = make_shared<PawPrint>();
-	_parseNode(paw, root);
+	_parseNode(text, paw, root);
 
     return paw;
 }
