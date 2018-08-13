@@ -183,13 +183,13 @@ static shared_ptr<PawPrint> _loadPaw(const string &path) {
 void _t_load_map_paws() {
     string correct[6] = {
 		"a :\n" \
-		"  abc\n",
+		"  \"abc\"\n",
 		"a :\n" \
 		"  b :\n" \
-		"    abc\n",
+		"    \"abc\"\n",
 		"a :\n" \
 		"  b :\n" \
-		"    abc\n" \
+		"    \"abc\"\n" \
 		"  c :\n" \
 		"    x :\n" \
 		"      1.00000000\n" \
@@ -197,21 +197,21 @@ void _t_load_map_paws() {
 		"      2.00000000\n" \
 		"    z :\n" \
 		"      i :\n" \
-		"        1\n" \
+		"        \"1\"\n" \
 		"      j :\n" \
-		"        2\n" \
+		"        \"2\"\n" \
 		"      k :\n" \
-		"        3\n",
+		"        \"3\"\n",
 		"i :\n" \
-		"  1\n" \
+		"  \"1\"\n" \
 		"j :\n" \
-		"  2\n" \
+		"  \"2\"\n" \
 		"k :\n" \
-		"  3\n",
+		"  \"3\"\n",
 		"a :\n  ",
 		"a :\n" \
 		"  b :\n" \
-		"    abc\n" \
+		"    \"abc\"\n" \
 		"  c :\n" \
 		"    x :\n" \
 		"      1.00000000\n" \
@@ -219,11 +219,11 @@ void _t_load_map_paws() {
 		"      2.00000000\n" \
 		"    z :\n" \
 		"      i :\n" \
-		"        1\n" \
+		"        \"1\"\n" \
 		"      j :\n" \
-		"        2\n" \
+		"        \"2\"\n" \
 		"      k :\n" \
-		"        3\n" \
+		"        \"3\"\n" \
 		"  d :\n" \
 		"    13\n",
     };
@@ -331,9 +331,21 @@ static void _t_loadParsingTree () {
 
 }
 
+static void _t_load_boss_appear_snake () {
+#if _WINDOWS
+    auto paw = _loadPaw("../../paw/boss_appear_snake.obj");
+#else
+    auto paw = _loadPaw("../paw/boss_appear_snake.obj");
+#endif
+    assert(paw != null);
+
+    cout << paw->root().toString();
+}
+
 int main () {
     _t_basic();
     _t_loadParsingTree();
 	_t_load_map_paws();
+	_t_load_boss_appear_snake();
     return 0;
 }
