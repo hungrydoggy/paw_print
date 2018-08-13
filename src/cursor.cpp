@@ -34,6 +34,16 @@ bool PawPrint::Cursor::isSequence () const { return type() == Data::TYPE_SEQUENC
 bool PawPrint::Cursor::isMap      () const { return type() == Data::TYPE_MAP;      }
 
 template<>
+double PawPrint::Cursor::get<double> (double default_value) const {
+    if      (is<double>() == true)
+        return paw_print_.getData<double>(idx_ + sizeof(DataType));
+    else if (is<int   >() == true)
+        return paw_print_.getData<int   >(idx_ + sizeof(DataType));
+    else
+        return default_value;
+}
+
+template<>
 const char* PawPrint::Cursor::get<const char*> (const char *default_value) const {
     if (is<const char*>() == false)
         return default_value;

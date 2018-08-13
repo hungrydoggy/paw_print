@@ -170,6 +170,7 @@ template<> bool PawPrint::Cursor::is<double     > () const;
 template<> bool PawPrint::Cursor::is<const char*> () const;
 template<> bool PawPrint::Cursor::is<string     > () const;
 
+template<> double      PawPrint::Cursor::get<double     > (double      default_value) const;
 template<> const char* PawPrint::Cursor::get<const char*> (const char *default_value) const;
 
 }

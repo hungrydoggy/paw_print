@@ -138,7 +138,6 @@ static void _t_basic () {
 	assert(strcmp(root["abc"]["d"][1].get(""), "j") == 0);
 	assert(strcmp(root["abc"]["d"][2].get(""), "k") == 0);
 	assert(strcmp(root["abc"]["d"][3].get(""), "") == 0);
-	assert(root["abc"]["d"][3].get(-1.0) == -1.0);
 	assert(root["abc"]["d"][3].get(-1) == 5);
 	assert(root["abc"]["d"][4].get(-2) == 6);
 	assert(root["abc"]["d"][5].get(-3) == 7);
