@@ -332,6 +332,7 @@ static void _t_loadParsingTree () {
 }
 
 static void _t_load_boss_appear_snake () {
+    cout << "load_boss_appear_snake.obj" << endl;
 #if _WINDOWS
     auto paw = _loadPaw("../../paw/boss_appear_snake.obj");
 #else
@@ -339,7 +340,21 @@ static void _t_load_boss_appear_snake () {
 #endif
     assert(paw != null);
 
-    cout << paw->root().toString();
+    auto correct =
+		"@objects/ui/popup/boss_appear.obj :\n" \
+		"  ref :\n" \
+		"    boss_img :\n" \
+		"      \"images/ui/popup/snake_art.png\"\n" \
+		"    icon_img :\n" \
+		"      \"images/status/icons/inven_ico_snake_poison.png\"\n" \
+		"    icon_pos :\n" \
+		"      - 0\n" \
+		"      - 10.50000000\n" \
+		"      - 1\n" \
+		"    icon_siz :\n" \
+		"      - 79\n" \
+		"      - 0\n";
+    assert(paw->root().toString() == correct);
 }
 
 int main () {

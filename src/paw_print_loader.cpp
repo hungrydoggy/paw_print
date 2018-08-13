@@ -637,8 +637,8 @@ static void _initLoaders () {
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        paw->beginMap();
-        paw->endMap();
+        paw->beginSequence();
+        paw->endSequence();
     });
 
     // Rule 12 : SEQUENCE -> square_open SEQ_BLOCKED square_close 
@@ -647,12 +647,12 @@ static void _initLoaders () {
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        paw->beginMap();
+        paw->beginSequence();
 
         auto &children = node->children();
         _parseNode(text, paw, children[1]);
 
-        paw->endMap();
+        paw->endSequence();
     });
 
     // Rule 13 : SEQUENCE -> SEQ_ELEM SEQUENCE 
