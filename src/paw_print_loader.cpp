@@ -631,13 +631,37 @@ static void _initLoaders () {
         _parseNode(text, paw, children[1]);
     });
 
-    // Rule 11 : SEQUENCE -> SEQ_ELEM SEQUENCE 
+    // Rule 11 : SEQUENCE -> square_open square_close 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 11;
+        paw->beginMap();
+        paw->endMap();
+    });
+
+    // Rule 12 : SEQUENCE -> square_open SEQ_BLOCKED square_close 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[1]);
+
+        paw->endMap();
+    });
+
+    // Rule 13 : SEQUENCE -> SEQ_ELEM SEQUENCE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 13;
 
         if (need_wrap == true)
             paw->beginSequence();
@@ -650,13 +674,13 @@ static void _initLoaders () {
             paw->endSequence();
     });
 
-    // Rule 12 : SEQUENCE -> SEQ_ELEM 
+    // Rule 14 : SEQUENCE -> SEQ_ELEM 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 11;
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 13;
 
         if (need_wrap == true)
             paw->beginSequence();
@@ -668,7 +692,28 @@ static void _initLoaders () {
             paw->endSequence();
     });
 
-    // Rule 13 : NODE -> int 
+    // Rule 15 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[2]);
+    });
+    
+    // Rule 16 : SEQ_BLOCKED -> NODE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+    });
+
+    // Rule 17 : NODE -> int 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -685,7 +730,7 @@ static void _initLoaders () {
         paw->pushInt(v);
     });
 
-    // Rule 14 : NODE -> double 
+    // Rule 18 : NODE -> double 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -702,7 +747,7 @@ static void _initLoaders () {
         paw->pushDouble(v);
     });
 
-    // Rule 15 : NODE -> string 
+    // Rule 19 : NODE -> string 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -716,7 +761,7 @@ static void _initLoaders () {
                     token->last_idx - token->first_idx + 1));
     });
 
-    // Rule 16 : NODE -> MAP 
+    // Rule 20 : NODE -> MAP 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -726,7 +771,7 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    // Rule 17 : NODE -> SEQUENCE 
+    // Rule 21 : NODE -> SEQUENCE 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -736,6 +781,28 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
+    // Rule 0 : S' -> S 
+    // Rule 1 : S -> NODE 
+    // Rule 2 : KV -> string colon #indent NODE #dedent 
+    // Rule 3 : MAP -> curly_open curly_close 
+    // Rule 4 : MAP -> curly_open MAP_BLOCKED curly_close 
+    // Rule 5 : MAP -> KV MAP 
+    // Rule 6 : MAP -> KV 
+    // Rule 7 : KV_BLOCKED -> string colon NODE 
+    // Rule 8 : MAP_BLOCKED -> KV_BLOCKED 
+    // Rule 9 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED 
+    // Rule 10 : SEQ_ELEM -> dash NODE 
+    // Rule 11 : SEQUENCE -> square_open square_close 
+    // Rule 12 : SEQUENCE -> square_open SEQ_BLOCKED square_close 
+    // Rule 13 : SEQUENCE -> SEQ_ELEM SEQUENCE 
+    // Rule 14 : SEQUENCE -> SEQ_ELEM 
+    // Rule 15 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED 
+    // Rule 16 : SEQ_BLOCKED -> NODE 
+    // Rule 17 : NODE -> int 
+    // Rule 18 : NODE -> double 
+    // Rule 19 : NODE -> string 
+    // Rule 20 : NODE -> MAP 
+    // Rule 21 : NODE -> SEQUENCE 
 }
 
 static LoaderFunc getLoader (int rule_idx) {
