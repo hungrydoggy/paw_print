@@ -12,10 +12,10 @@ inc_dirs = [
 
 link_args = [
 	'-L../external/lib',
-	'-llalr_parsergen',
 ]
 
 srcs = run_command('python3', 'find_src.py', 'src').stdout().strip().split('\n')
+srcs += run_command('python3', 'find_src.py', 'external').stdout().strip().split('\n')
 paw_print_lib = static_library('paw_print', srcs, include_directories : inc_dirs, link_args : link_args)
 
 
