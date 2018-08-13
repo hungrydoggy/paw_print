@@ -1,5 +1,6 @@
 #include "./paw_print.h"
 
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 
@@ -113,20 +114,29 @@ string PawPrint::Cursor::toString (int indent, int indent_inc) const {
 
     switch (type()) {
         case PawPrint::Data::TYPE_INT:
-            ss << get(0);
+            ss << get(0) << endl;
             break;
         case PawPrint::Data::TYPE_DOUBLE:
-            ss << get(0.0);
+            ss << std::fixed << std::setprecision(8) << get(0.0) << endl;
             break;
         case PawPrint::Data::TYPE_STRING:
-            ss << get("");
+            ss << get("") << endl;
             break;
         case PawPrint::Data::TYPE_SEQUENCE:
-            for (int i=0; i<size(); ++i)
-                ss << (*this)[i].toString(indent + indent_inc, indent_inc);
+			for (int i = 0; i < size(); ++i) {
+				if (i != 0) {
+					for (int i = 0; i<indent; ++i)
+						ss << " ";
+				}
+				ss << (*this)[i].toString(indent + indent_inc, indent_inc);
+			}
             break;
         case PawPrint::Data::TYPE_MAP:
             for (int i=0; i<size(); ++i) {
+				if (i != 0) {
+					for (int i = 0; i<indent; ++i)
+						ss << " ";
+				}
                 ss << getKey(i) << " :" << endl;
                 ss << (*this)[i].toString(indent + indent_inc, indent_inc);
             }

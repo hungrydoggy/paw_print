@@ -182,6 +182,7 @@ static shared_ptr<PawPrint> _loadPaw(const string &path) {
 
 void _t_load_map_paws() {
 	for (int pi = 0; pi <= 5; ++pi) {
+	//for (int pi = 2; pi <= 2; ++pi) {
 		cout << "load_map_paw : " << pi << endl;
 #if _WINDOWS
 		auto paw = _loadPaw("../../paw/map_0" + to_string(pi) + ".paw");

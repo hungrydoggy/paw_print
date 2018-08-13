@@ -511,10 +511,14 @@ static void _initLoaders () {
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        paw->pushKeyValuePair();
-
         auto &children = node->children();
-        _parseNode(text, paw, children[0]);
+
+		auto key_token = children[0]->token();
+		paw->pushKey(
+				string(
+					text + key_token->first_idx,
+					key_token->last_idx - key_token->first_idx + 1));
+
         _parseNode(text, paw, children[3]);
     });
 
@@ -585,10 +589,14 @@ static void _initLoaders () {
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        paw->pushKeyValuePair();
-
         auto &children = node->children();
-        _parseNode(text, paw, children[0]);
+
+		auto key_token = children[0]->token();
+		paw->pushKey(
+			string(
+				text + key_token->first_idx,
+				key_token->last_idx - key_token->first_idx + 1));
+
         _parseNode(text, paw, children[2]);
     });
 
@@ -598,16 +606,8 @@ static void _initLoaders () {
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 9;
-
-        if (need_wrap == true)
-            paw->beginMap();
-
         auto &children = node->children();
         _parseNode(text, paw, children[0]);
-
-        if (need_wrap == true)
-            paw->endMap();
     });
 
     // Rule 9 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED 
@@ -616,17 +616,9 @@ static void _initLoaders () {
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 9;
-
-        if (need_wrap == true)
-            paw->beginMap();
-
         auto &children = node->children();
         _parseNode(text, paw, children[0]);
         _parseNode(text, paw, children[2]);
-
-        if (need_wrap == true)
-            paw->endMap();
     });
 
     // Rule 10 : SEQ_ELEM -> dash NODE 
