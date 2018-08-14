@@ -67,6 +67,8 @@ public:
 
     class Cursor {
     public:
+        const PawPrint & paw_print () { return paw_print_; }
+
         Cursor (const PawPrint &paw_print, int idx);
         Cursor (const Cursor &cursor);
 
@@ -118,8 +120,8 @@ public:
 
     void setRawData (const vector<unsigned char> &raw_data);
 
-    int getColumn (int idx);
-    int getLine (int idx);
+    int getColumn (int idx) const;
+    int getLine (int idx) const;
 
 
     // write

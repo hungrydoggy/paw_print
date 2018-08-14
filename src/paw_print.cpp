@@ -291,18 +291,18 @@ void PawPrint::setRawData (const vector<unsigned char> &raw_data) {
     raw_data_ = raw_data;
 }
 
-int PawPrint::getColumn (int idx) {
+int PawPrint::getColumn (int idx) const {
     if (column_map_.find(idx) == column_map_.end())
         return -1;
 
-    return column_map_[idx];
+    return column_map_.at(idx);
 }
 
-int PawPrint::getLine (int idx) {
+int PawPrint::getLine (int idx) const {
     if (line_map_.find(idx) == line_map_.end())
         return -1;
 
-    return line_map_[idx];
+    return line_map_.at(idx);
 }
 
 }
