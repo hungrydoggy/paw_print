@@ -192,19 +192,27 @@ int PawPrint::Cursor::getLine () const {
 }
 
 const char* PawPrint::Cursor::getKeyOfPair () const {
-    if (isKeyValuePair() == false)
-        return null;
+    if (isKeyValuePair() == true) {
+        auto key_idx = paw_print_->getKeyRawIdxOfPair(idx_);
+        return paw_print_->getStrValue(key_idx);
+    }else if (isMap() == true && size() > 0) {
+        auto key_idx = paw_print_->getKeyRawIdxOfPair((*this)[0].idx());
+        return paw_print_->getStrValue(key_idx);
+    }
 
-    auto key_idx = paw_print_->getKeyRawIdxOfPair(idx_);
-    return paw_print_->getStrValue(key_idx);
+    return null;
 }
 
 PawPrint::Cursor PawPrint::Cursor::getValueOfPair () const {
-    if (isKeyValuePair() == false)
-        return Cursor(paw_print_, -1);
+    if (isKeyValuePair() == true) {
+        auto value_idx = paw_print_->getValueRawIdxOfPair(idx_);
+        return Cursor(paw_print_, value_idx);
+    }else if (isMap() == true && size() > 0) {
+        auto value_idx = paw_print_->getValueRawIdxOfPair((*this)[0].idx());
+        return Cursor(paw_print_, value_idx);
+    }
 
-    auto value_idx = paw_print_->getValueRawIdxOfPair(idx_);
-    return Cursor(paw_print_, value_idx);
+    return Cursor(paw_print_, -1);
 }
 
 }
