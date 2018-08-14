@@ -18,6 +18,11 @@ PawPrint::Cursor::Cursor (const PawPrint &paw_print, int idx)
  idx_(idx) {
 }
 
+PawPrint::Cursor::Cursor (const Cursor &cursor)
+:paw_print_(cursor.paw_print_),
+ idx_(cursor.idx_) {
+}
+
 DataType PawPrint::Cursor::type () const {
     if (idx_ < 0)
         return Data::TYPE_NONE;

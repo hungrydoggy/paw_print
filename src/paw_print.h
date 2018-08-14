@@ -68,6 +68,7 @@ public:
     class Cursor {
     public:
         Cursor (const PawPrint &paw_print, int idx);
+        Cursor (const Cursor &cursor);
 
 		inline int idx () const { return idx_; }
         DataType type () const;
