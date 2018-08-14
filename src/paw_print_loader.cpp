@@ -30,8 +30,9 @@ static bool _addNumberToken (
         const char *text,
         int first_idx,
         int last_idx,
-        int indent,
-        int line,
+        unsigned short indent,
+        unsigned short column,
+        unsigned short line,
         vector<Token> &tokens) {
 
     // find point idx and check number format
@@ -60,7 +61,7 @@ static bool _addNumberToken (
     auto is_int = point_idx > last_idx;
     auto type = (is_int == true)? TokenType::INT : TokenType::DOUBLE;
 
-    tokens.push_back(Token(type, first_idx, last_idx, indent, line));
+    tokens.push_back(Token(type, first_idx, last_idx, indent, column, line));
 
     return true;
 }
@@ -69,11 +70,12 @@ static bool _addStringToken (
         const char *text,
         int first_idx,
         int last_idx,
-        int indent,
-        int line,
+        unsigned short indent,
+        unsigned short column,
+        unsigned short line,
         vector<Token> &tokens) {
 
-    tokens.push_back(Token(TokenType::STRING, first_idx, last_idx, indent, line));
+    tokens.push_back(Token(TokenType::STRING, first_idx, last_idx, indent, column, line));
 
     return true;
 }
@@ -82,14 +84,15 @@ static bool _addWordToken (
         const char *text,
         int first_idx,
         int last_idx,
-        int indent,
-        int line,
+        unsigned short indent,
+        unsigned short column,
+        unsigned short line,
         vector<Token> &tokens) {
 
     if (text[first_idx] >= '0' && text[first_idx] <= '9')
-        return _addNumberToken(text, first_idx, last_idx, indent, line, tokens);
+        return _addNumberToken(text, first_idx, last_idx, indent, column, line, tokens);
     else
-        return _addStringToken(text, first_idx, last_idx, indent, line, tokens);
+        return _addStringToken(text, first_idx, last_idx, indent, column, line, tokens);
 }
 
 // return next idx
@@ -97,8 +100,9 @@ static int _findAndAddToken_quoted(
         char quote_char,
         const char *text,
         int start_idx,
-        int indent,
-        int line,
+        unsigned short indent,
+        unsigned short column,
+        unsigned short line,
         vector<Token> &tokens) {
 
     auto idx = start_idx;
@@ -119,7 +123,7 @@ static int _findAndAddToken_quoted(
             default:
                 if (c == quote_char) {
                     auto is_ok = _addStringToken(
-                            text, start_idx, idx - 1, indent, line, tokens);
+                            text, start_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                     return idx + 1;
@@ -153,19 +157,21 @@ static int _findAndAddToken (
         const char *text,
         int start_idx,
         vector<Token> &tokens,
-        int &indent,
-        int &line) {
+        unsigned short &indent,
+        unsigned short &column,
+        unsigned short &line) {
 
     int idx = start_idx;
 
     // trim left and indent
     bool need_update_indent = false;
-    for (; true; ++idx) {
+    for (; true; ++idx, ++column) {
         const char c = text[idx];
         if (c == 0) {
             return idx;
         }if (c == '\n') {
             indent = 0;
+            column = 0;
             ++line;
             need_update_indent = true;
         }else if (c == ' ') {
@@ -181,7 +187,7 @@ static int _findAndAddToken (
 
 
     // tokenize
-    for (; true; ++idx) {
+    for (; true; ++idx, ++column) {
         const char c = text[idx];
         switch (c) {
             case 0:
@@ -190,7 +196,7 @@ static int _findAndAddToken (
             case ' ': {
 				if (idx > first_idx) {
 					auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
 					if (is_ok == false)
 						return -1;
 				}
@@ -200,17 +206,19 @@ static int _findAndAddToken (
 			case '#': {
 				if (idx > first_idx) {
 					auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
 					if (is_ok == false)
 						return -1;
 				}
-				return _findAndSkip_comment(text, idx + 1);
+				auto next_idx = _findAndSkip_comment(text, idx + 1);
+                column += next_idx - (idx + 1);
+                return next_idx;
 			}
 
             case '\n': {
 				if (idx > first_idx) {
 					auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
 					if (is_ok == false)
 						return -1;
 				}
@@ -219,24 +227,25 @@ static int _findAndAddToken (
             case ',': {
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                 }
 
-                tokens.push_back(Token(TokenType::COMMA, idx, idx, indent, line));
+                tokens.push_back(
+                        Token(TokenType::COMMA, idx, idx, indent, column, line));
 
                 return idx + 1;
             }
             case ':': {
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                 }
 
-                tokens.push_back(Token(TokenType::COLON, idx, idx, indent, line));
+                tokens.push_back(Token(TokenType::COLON, idx, idx, indent, column, line));
 
                 indent += 4;
 
@@ -245,83 +254,90 @@ static int _findAndAddToken (
             case '-': {
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                 }
 
-                tokens.push_back(Token(TokenType::DASH, idx, idx, indent, line));
+                tokens.push_back(Token(TokenType::DASH, idx, idx, indent, column, line));
 
                 return idx + 1;
             }
             case '\"': {
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                 }
 
-                return _findAndAddToken_quoted(
-                        '\"', text, idx + 1, indent, line, tokens);
+                auto next_idx = _findAndAddToken_quoted(
+                        '\"', text, idx + 1, indent, column, line, tokens);
+                column += next_idx - (idx + 1);
+                return next_idx;
             }
             case '\'': {
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                 }
 
-                return _findAndAddToken_quoted(
-                        '\'', text, idx + 1, indent, line, tokens);
+                auto next_idx = _findAndAddToken_quoted(
+                        '\'', text, idx + 1, indent, column, line, tokens);
+                column += next_idx - (idx + 1);
+                return next_idx;
             }
             case '{': {
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                 }
 
-                tokens.push_back(Token(TokenType::CURLY_OPEN, idx, idx, indent, line));
+                tokens.push_back(
+                        Token(TokenType::CURLY_OPEN, idx, idx, indent, column, line));
 
                 return idx + 1;
             }
             case '}': {
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                 }
 
-                tokens.push_back(Token(TokenType::CURLY_CLOSE, idx, idx, indent, line));
+                tokens.push_back(
+                        Token(TokenType::CURLY_CLOSE, idx, idx, indent, column, line));
 
                 return idx + 1;
             }
             case '[': {
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                 }
 
-                tokens.push_back(Token(TokenType::SQUARE_OPEN, idx, idx, indent, line));
+                tokens.push_back(
+                        Token(TokenType::SQUARE_OPEN, idx, idx, indent, column, line));
 
                 return idx + 1;
             }
             case ']': {
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
-                            text, first_idx, idx - 1, indent, line, tokens);
+                            text, first_idx, idx - 1, indent, column, line, tokens);
                     if (is_ok == false)
                         return -1;
                 }
 
                 tokens.push_back(Token(
-                        TokenType::SQUARE_CLOSE, idx, idx, indent, line));
+                        TokenType::SQUARE_CLOSE, idx, idx, indent, column, line));
 
                 return idx + 1;
             }
@@ -335,14 +351,16 @@ bool PawPrintLoader::tokenize (const char *text, vector<Token> &tokens) {
     int idx = 0;
 
     // trim left and indent
-    int indent = 0;
-    int line = 0;
-    for (; true; ++idx) {
+    unsigned short indent = 0;
+    unsigned short column = 0;
+    unsigned short line = 0;
+    for (; true; ++idx, ++column) {
         const char c = text[idx];
         if (c == 0) {
             return idx - 1;
         }if (c == '\n') {
             indent = 0;
+            column = 0;
             ++line;
         }else if (c == ' ') {
             ++indent;
@@ -356,7 +374,7 @@ bool PawPrintLoader::tokenize (const char *text, vector<Token> &tokens) {
 
     // find tokens
     while (text[idx] != 0) {
-        idx = _findAndAddToken(text, idx, tokens, indent, line);
+        idx = _findAndAddToken(text, idx, tokens, indent, column, line);
         if (idx < 0)
             return false;
     }
@@ -405,6 +423,7 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
                             t.first_idx,
                             t.last_idx,
                             t.indent,
+                            t.column,
                             t.line));
                 indent_stack.push(t.indent);
             }else if (t.indent < pre_t.indent){
@@ -415,6 +434,7 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
                                 t.first_idx,
                                 t.last_idx,
                                 t.indent,
+                                t.column,
                                 t.line));
                     indent_stack.pop();
                 }
@@ -447,6 +467,7 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
                     last_t.first_idx,
                     last_t.last_idx,
                     last_t.indent,
+                    last_t.column,
                     last_t.line));
         indent_stack.pop();
     }
@@ -457,6 +478,7 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
                 last_t.first_idx,
                 last_t.last_idx,
                 last_t.indent,
+                last_t.column,
                 last_t.line));
 
     return true;
@@ -516,6 +538,7 @@ void PawPrintLoader::_initParsingTable () {
         str[size-1] = 0;
         ss << t->first_idx << ", " << t->last_idx << ", indent:" << t->indent
                 << ", line:" << t->line
+                << ", column:" << t->column
                 << ", \"" << str << "\")";
         delete[] str;
         return ss.str();
