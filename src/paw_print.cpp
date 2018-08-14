@@ -19,10 +19,16 @@ PawPrint::PawPrint (const vector<unsigned char> &raw_data)
 
 PawPrint::PawPrint (const Cursor &cursor)
 :PawPrint() {
+    operator = (cursor);
+}
+
+const PawPrint& PawPrint::operator = (const Cursor &cursor) {
     auto cursor_idx = cursor.idx();
     auto data_size = cursor.paw_print()->dataSize(cursor_idx);
 
     raw_data_.resize(data_size);
+    column_map_.clear();
+    line_map_  .clear();
 
     // copy raw_data
     auto &cursor_raw_data = cursor.paw_print()->raw_data_;
@@ -49,6 +55,8 @@ PawPrint::PawPrint (const Cursor &cursor)
 
         line_map_[idx] = itr.second;
     }
+
+    return *this;
 }
 
 PawPrint::~PawPrint () {

@@ -124,6 +124,8 @@ public:
     PawPrint (const Cursor &cursor);
     ~PawPrint ();
 
+    const PawPrint& operator = (const Cursor &cursor);
+
     DataType type (int idx) const;
 
     int dataSize (int idx) const;
