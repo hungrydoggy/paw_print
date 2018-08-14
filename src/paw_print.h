@@ -80,6 +80,7 @@ public:
 
         bool isSequence () const;
         bool isMap () const;
+        bool isKeyValuePair () const;
 
         template <class T>
         T get (T default_value) const {

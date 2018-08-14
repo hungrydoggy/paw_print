@@ -35,8 +35,16 @@ template<> bool PawPrint::Cursor::is<double     > () const { return type() == Da
 template<> bool PawPrint::Cursor::is<const char*> () const { return type() == Data::TYPE_STRING; }
 template<> bool PawPrint::Cursor::is<string     > () const { return type() == Data::TYPE_STRING; }
 
-bool PawPrint::Cursor::isSequence () const { return type() == Data::TYPE_SEQUENCE; }
-bool PawPrint::Cursor::isMap      () const { return type() == Data::TYPE_MAP;      }
+bool PawPrint::Cursor::isSequence () const {
+    return type() == Data::TYPE_SEQUENCE;
+}
+
+bool PawPrint::Cursor::isMap () const {
+    return type() == Data::TYPE_MAP;
+}
+bool PawPrint::Cursor::isKeyValuePair () const {
+    return type() == Data::TYPE_KEY_VALUE_PAIR;
+}
 
 template<>
 double PawPrint::Cursor::get<double> (double default_value) const {
