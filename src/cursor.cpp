@@ -13,20 +13,23 @@ using std::endl;
 using std::stringstream;
 
 
-PawPrint::Cursor::Cursor (const PawPrint *paw_print, int idx)
+PawPrint::Cursor::Cursor (
+        const PawPrint *paw_print, int idx, const shared_ptr<PawPrint> &holdable)
 :paw_print_(paw_print),
- idx_(idx) {
+ idx_(idx),
+ holder_(holdable){
 }
 
 PawPrint::Cursor::Cursor (const Cursor &cursor)
 :paw_print_(cursor.paw_print_),
- idx_(cursor.idx_) {
+ idx_(cursor.idx_),
+ holder_(cursor.holder_){
 }
 
 const PawPrint::Cursor& PawPrint::Cursor::operator = (const Cursor &cursor) {
     paw_print_ = cursor.paw_print_;
     idx_       = cursor.idx_;
-
+    holder_    = cursor.holder_;
     return *this;
 }
 
@@ -80,33 +83,33 @@ PawPrint::Cursor PawPrint::Cursor::operator[] (int idx) const {
     if (isSequence() == true) {
         auto &data_idxs = paw_print_->getDataIdxsOfSequence(idx_);
         if (idx < 0 || idx >= data_idxs.size())
-            return Cursor(paw_print_, -1);
+            return Cursor(paw_print_, -1, holder_);
 
-        return Cursor(paw_print_, data_idxs[idx]);
+        return Cursor(paw_print_, data_idxs[idx], holder_);
     }else if (isMap() == true) {
         auto &data_idxs = paw_print_->getDataIdxsOfMap(idx_);
         int pair_idx = data_idxs[idx];
         if (pair_idx < 0)
-            return Cursor(paw_print_, -1);
+            return Cursor(paw_print_, -1, holder_);
 
         auto value_idx = paw_print_->getValueRawIdxOfPair(pair_idx);
-        return Cursor(paw_print_, value_idx);
+        return Cursor(paw_print_, value_idx, holder_);
     }
 
-    return Cursor(paw_print_, -1);
+    return Cursor(paw_print_, -1, holder_);
 }
 
 PawPrint::Cursor PawPrint::Cursor::operator[] (const char *key) const {
     if (isMap() == false)
-        return Cursor(paw_print_, -1);
+        return Cursor(paw_print_, -1, holder_);
 
     auto &data_idxs = paw_print_->getDataIdxsOfMap(idx_);
     int pair_idx = paw_print_->findRawIdxOfValue(data_idxs, 0, data_idxs.size() - 1, key);
     if (pair_idx < 0)
-        return Cursor(paw_print_, -1);
+        return Cursor(paw_print_, -1, holder_);
 
     auto value_idx = paw_print_->getValueRawIdxOfPair(pair_idx);
-    return Cursor(paw_print_, value_idx);
+    return Cursor(paw_print_, value_idx, holder_);
 }
 
 PawPrint::Cursor PawPrint::Cursor::operator[] (const string &key) const {
@@ -206,13 +209,13 @@ const char* PawPrint::Cursor::getKeyOfPair () const {
 PawPrint::Cursor PawPrint::Cursor::getValueOfPair () const {
     if (isKeyValuePair() == true) {
         auto value_idx = paw_print_->getValueRawIdxOfPair(idx_);
-        return Cursor(paw_print_, value_idx);
+        return Cursor(paw_print_, value_idx, holder_);
     }else if (isMap() == true && size() > 0) {
         auto value_idx = paw_print_->getValueRawIdxOfPair((*this)[0].idx());
-        return Cursor(paw_print_, value_idx);
+        return Cursor(paw_print_, value_idx, holder_);
     }
 
-    return Cursor(paw_print_, -1);
+    return Cursor(paw_print_, -1, holder_);
 }
 
 }

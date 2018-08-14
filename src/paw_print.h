@@ -69,7 +69,10 @@ public:
     public:
         const PawPrint* paw_print () const { return paw_print_; }
 
-        Cursor (const PawPrint *paw_print, int idx);
+        Cursor (
+                const PawPrint *paw_print,
+                int idx,
+                const shared_ptr<PawPrint> &holdable = null);
         Cursor (const Cursor &cursor);
 
 		inline int idx () const { return idx_; }
@@ -111,9 +114,15 @@ public:
         int getColumn () const;
         int getLine () const;
 
+        inline void hold (const shared_ptr<PawPrint> &sp) {
+            if (sp.get() == paw_print_)
+                holder_ = sp;
+        }
+
     private:
         const PawPrint *paw_print_;
         int idx_;
+        shared_ptr<PawPrint> holder_; 
     };
 
 
