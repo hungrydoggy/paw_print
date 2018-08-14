@@ -168,4 +168,12 @@ string PawPrint::Cursor::toString (int indent, int indent_inc, bool ignore_inden
     return ss.str();
 }
 
+int PawPrint::Cursor::getColumn () const {
+    return paw_print_.getColumn(idx_);
+}
+
+int PawPrint::Cursor::getLine () const {
+    return paw_print_.getLine(idx_);
+}
+
 }

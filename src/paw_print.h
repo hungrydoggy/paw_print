@@ -100,6 +100,9 @@ public:
 
         string toString (int indent=0, int indent_inc=2, bool ignore_indent=false) const;
 
+        int getColumn () const;
+        int getLine () const;
+
     private:
         const PawPrint &paw_print_;
         int idx_;
