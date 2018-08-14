@@ -589,7 +589,9 @@ static void _initLoaders () {
 		paw->pushKey(
 				string(
 					text + key_token->first_idx,
-					key_token->last_idx - key_token->first_idx + 1));
+					key_token->last_idx - key_token->first_idx + 1),
+                key_token->column,
+                key_token->line);
 
         _parseNode(text, paw, children[3]);
     });
@@ -665,9 +667,11 @@ static void _initLoaders () {
 
 		auto key_token = children[0]->token();
 		paw->pushKey(
-			string(
-				text + key_token->first_idx,
-				key_token->last_idx - key_token->first_idx + 1));
+                string(
+                    text + key_token->first_idx,
+                    key_token->last_idx - key_token->first_idx + 1),
+                key_token->column,
+                key_token->line);
 
         _parseNode(text, paw, children[2]);
     });
@@ -799,7 +803,7 @@ static void _initLoaders () {
                     token->last_idx - token->first_idx + 1));
         int v = 0;
         iss >> v;
-        paw->pushInt(v);
+        paw->pushInt(v, token->column, token->line);
     });
 
     // Rule 18 : NODE -> double 
@@ -816,7 +820,7 @@ static void _initLoaders () {
                     token->last_idx - token->first_idx + 1));
         double v = 0;
         iss >> v;
-        paw->pushDouble(v);
+        paw->pushDouble(v, token->column, token->line);
     });
 
     // Rule 19 : NODE -> string 
@@ -830,7 +834,9 @@ static void _initLoaders () {
         paw->pushString(
                 string(
                     text + token->first_idx,
-                    token->last_idx - token->first_idx + 1));
+                    token->last_idx - token->first_idx + 1),
+                token->column,
+                token->line);
     });
 
     // Rule 20 : NODE -> MAP 

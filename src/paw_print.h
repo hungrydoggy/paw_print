@@ -118,19 +118,26 @@ public:
 
     void setRawData (const vector<unsigned char> &raw_data);
 
+    int getColumn (int idx);
+    int getLine (int idx);
+
 
     // write
-    void pushInt    (int    value); 
-    void pushDouble (double value); 
-    void pushString (const char *value); 
-    inline void pushString (const string &value) { return pushString(value.c_str()); }
-    void pushKeyValuePair ();
-    void pushKey (const char *value);
-    inline void pushKey (const string &value) { return pushKey(value.c_str()); }
-    void beginSequence (); 
-    void endSequence (); 
-    void beginMap (); 
-    void endMap (); 
+    void pushInt    (int    value, int column=-1, int line=-1); 
+    void pushDouble (double value, int column=-1, int line=-1); 
+    void pushString (const char *value, int column=-1, int line=-1); 
+    inline void pushString (const string &value, int column=-1, int line=-1) {
+        return pushString(value.c_str(), column, line);
+    }
+    void pushKeyValuePair (int column=-1, int line=-1);
+    void pushKey (const char *value, int column=-1, int line=-1);
+    inline void pushKey (const string &value, int column=-1, int line=-1) {
+        return pushKey(value.c_str(), column, line);
+    }
+    void beginSequence (int column=-1, int line=-1); 
+    void endSequence   (int column=-1, int line=-1); 
+    void beginMap (int column=-1, int line=-1); 
+    void endMap   (int column=-1, int line=-1); 
 
 
     // read
@@ -164,6 +171,8 @@ private:
 
     stack<int> curly_open_idx_stack_;
     stack<int> square_open_idx_stack_;
+    unordered_map<int, unsigned short> column_map_;
+    unordered_map<int, unsigned short> line_map_;
 };
 
 template<> bool PawPrint::Cursor::is<int        > () const;
