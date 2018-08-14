@@ -67,9 +67,9 @@ public:
 
     class Cursor {
     public:
-        const PawPrint & paw_print () { return paw_print_; }
+        const PawPrint* paw_print () const { return paw_print_; }
 
-        Cursor (const PawPrint &paw_print, int idx);
+        Cursor (const PawPrint *paw_print, int idx);
         Cursor (const Cursor &cursor);
 
 		inline int idx () const { return idx_; }
@@ -86,7 +86,7 @@ public:
         T get (T default_value) const {
             if (is<T>() == false)
                 return default_value;
-            return paw_print_.getData<T>(idx_ + sizeof(DataType));
+            return paw_print_->getData<T>(idx_ + sizeof(DataType));
         }
 
         const char* get (const string &default_value) const;
@@ -94,6 +94,8 @@ public:
         Cursor operator[] (int idx) const;
         Cursor operator[] (const char *key) const;
         Cursor operator[] (const string &key) const;
+
+        const Cursor& operator = (const Cursor &cursor);
 
         const char* getKey (int idx) const;
 
@@ -108,7 +110,7 @@ public:
         int getLine () const;
 
     private:
-        const PawPrint &paw_print_;
+        const PawPrint *paw_print_;
         int idx_;
     };
 
@@ -119,6 +121,7 @@ public:
 
     PawPrint ();
     PawPrint (const vector<unsigned char> &raw_data);
+    PawPrint (const Cursor &cursor);
     ~PawPrint ();
 
     DataType type (int idx) const;

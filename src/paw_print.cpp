@@ -17,14 +17,48 @@ PawPrint::PawPrint (const vector<unsigned char> &raw_data)
     setRawData(raw_data);
 }
 
+PawPrint::PawPrint (const Cursor &cursor)
+:PawPrint() {
+    auto cursor_idx = cursor.idx();
+    auto data_size = cursor.paw_print()->dataSize(cursor_idx);
+
+    raw_data_.resize(data_size);
+
+    // copy raw_data
+    auto &cursor_raw_data = cursor.paw_print()->raw_data_;
+    for (int di=0; di<raw_data_.size(); ++di) {
+        raw_data_[di] = cursor_raw_data[di + cursor_idx];
+    }
+
+    // copy column_map
+    auto &cursor_column_map = cursor.paw_print()->column_map_;
+    for (auto &itr : cursor_column_map) {
+        auto idx = itr.first - cursor_idx;
+        if (idx < 0 || idx >= data_size)
+            continue;
+
+        column_map_[idx] = itr.second;
+    }
+
+    // copy line_map
+    auto &cursor_line_map = cursor.paw_print()->line_map_;
+    for (auto &itr : cursor_line_map) {
+        auto idx = itr.first - cursor_idx;
+        if (idx < 0 || idx >= data_size)
+            continue;
+
+        line_map_[idx] = itr.second;
+    }
+}
+
 PawPrint::~PawPrint () {
 }
 
 PawPrint::Cursor PawPrint::root () const {
     if (raw_data_.size() <= 0)
-        return Cursor(*this, -1);
+        return Cursor(this, -1);
 
-    return Cursor(*this, 0);
+    return Cursor(this, 0);
 }
 
 DataType PawPrint::type (int idx) const {
