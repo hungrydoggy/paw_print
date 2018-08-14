@@ -184,4 +184,20 @@ int PawPrint::Cursor::getLine () const {
     return paw_print_.getLine(idx_);
 }
 
+const char* PawPrint::Cursor::getKeyOfPair () const {
+    if (isKeyValuePair() == false)
+        return null;
+
+    auto key_idx = paw_print_.getKeyRawIdxOfPair(idx_);
+    return paw_print_.getStrValue(key_idx);
+}
+
+PawPrint::Cursor PawPrint::Cursor::getValueOfPair () const {
+    if (isKeyValuePair() == false)
+        return Cursor(paw_print_, -1);
+
+    auto value_idx = paw_print_.getValueRawIdxOfPair(idx_);
+    return Cursor(paw_print_, value_idx);
+}
+
 }

@@ -101,6 +101,9 @@ public:
 
         string toString (int indent=0, int indent_inc=2, bool ignore_indent=false) const;
 
+        const char* getKeyOfPair () const;
+        Cursor getValueOfPair () const;
+
         int getColumn () const;
         int getLine () const;
 
