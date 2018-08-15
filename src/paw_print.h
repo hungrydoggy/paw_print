@@ -50,19 +50,21 @@ public:
 		using StrSizeType = unsigned short;
 
 		static const DataType TYPE_NONE = 0;
-		static const DataType TYPE_INT = 1;
-		static const DataType TYPE_DOUBLE = 2;
-		static const DataType TYPE_STRING = 3;
 
-		static const DataType TYPE_SEQUENCE = 4;
-		static const DataType TYPE_SEQUENCE_START = 4;
-		static const DataType TYPE_SEQUENCE_END = 5;
+		static const DataType TYPE_BOOL   = 1;
+		static const DataType TYPE_INT    = 2;
+		static const DataType TYPE_DOUBLE = 3;
+		static const DataType TYPE_STRING = 4;
 
-		static const DataType TYPE_MAP = 6;
-		static const DataType TYPE_MAP_START = 6;
-		static const DataType TYPE_MAP_END = 7;
+		static const DataType TYPE_SEQUENCE       = 5;
+		static const DataType TYPE_SEQUENCE_START = 5;
+		static const DataType TYPE_SEQUENCE_END   = 6;
 
-		static const DataType TYPE_KEY_VALUE_PAIR = 8;
+		static const DataType TYPE_MAP       = 7;
+		static const DataType TYPE_MAP_START = 7;
+		static const DataType TYPE_MAP_END   = 8;
+
+		static const DataType TYPE_KEY_VALUE_PAIR = 9;
 	};
 
     class Cursor {
@@ -148,6 +150,7 @@ public:
 
 
     // write
+    void pushBool   (bool   value, int column=-1, int line=-1); 
     void pushInt    (int    value, int column=-1, int line=-1); 
     void pushDouble (double value, int column=-1, int line=-1); 
     void pushString (const char *value, int column=-1, int line=-1); 
@@ -200,11 +203,13 @@ private:
     unordered_map<int, unsigned short> line_map_;
 };
 
+template<> bool PawPrint::Cursor::is<bool       > () const;
 template<> bool PawPrint::Cursor::is<int        > () const;
 template<> bool PawPrint::Cursor::is<double     > () const;
 template<> bool PawPrint::Cursor::is<const char*> () const;
 template<> bool PawPrint::Cursor::is<string     > () const;
 
+template<> bool        PawPrint::Cursor::get<bool       > (bool        default_value) const;
 template<> double      PawPrint::Cursor::get<double     > (double      default_value) const;
 template<> const char* PawPrint::Cursor::get<const char*> (const char *default_value) const;
 

@@ -40,6 +40,7 @@ DataType PawPrint::Cursor::type () const {
     return paw_print_->type(idx_);
 }
 
+template<> bool PawPrint::Cursor::is<bool       > () const { return type() == Data::TYPE_BOOL;   }
 template<> bool PawPrint::Cursor::is<int        > () const { return type() == Data::TYPE_INT;    }
 template<> bool PawPrint::Cursor::is<double     > () const { return type() == Data::TYPE_DOUBLE; }
 template<> bool PawPrint::Cursor::is<const char*> () const { return type() == Data::TYPE_STRING; }
@@ -54,6 +55,13 @@ bool PawPrint::Cursor::isMap () const {
 }
 bool PawPrint::Cursor::isKeyValuePair () const {
     return type() == Data::TYPE_KEY_VALUE_PAIR;
+}
+
+template<>
+bool PawPrint::Cursor::get<bool> (bool default_value) const {
+    if (is<bool>() == false)
+        return default_value;
+    return paw_print_->getData<char>(idx_) != 0;
 }
 
 template<>
