@@ -22,6 +22,12 @@ PawPrint::PawPrint (const Cursor &cursor)
     operator = (cursor);
 }
 
+PawPrint::PawPrint (bool          value) :PawPrint() { pushBool  (value); }
+PawPrint::PawPrint (int           value) :PawPrint() { pushInt   (value); } 
+PawPrint::PawPrint (double        value) :PawPrint() { pushDouble(value); }
+PawPrint::PawPrint (const char   *value) :PawPrint() { pushString(value); }
+PawPrint::PawPrint (const string &value) :PawPrint() { pushString(value); }
+
 const PawPrint& PawPrint::operator = (const Cursor &cursor) {
     auto cursor_idx = cursor.idx();
     auto data_size = cursor.paw_print()->dataSize(cursor_idx);

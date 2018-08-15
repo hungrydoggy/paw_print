@@ -135,6 +135,11 @@ public:
     PawPrint ();
     PawPrint (const vector<unsigned char> &raw_data);
     PawPrint (const Cursor &cursor);
+    PawPrint (bool          value);
+    PawPrint (int           value);
+    PawPrint (double        value);
+    PawPrint (const char   *value);
+    PawPrint (const string &value);
     ~PawPrint ();
 
     const PawPrint& operator = (const Cursor &cursor);
