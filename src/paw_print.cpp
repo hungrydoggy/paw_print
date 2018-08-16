@@ -28,6 +28,20 @@ PawPrint::PawPrint (double        value) :PawPrint() { pushDouble(value); }
 PawPrint::PawPrint (const char   *value) :PawPrint() { pushString(value); }
 PawPrint::PawPrint (const string &value) :PawPrint() { pushString(value); }
 
+#define PAW_PRINT_VECTOR_CONSTRUCTOR(TYPE, PUSH_TYPE) \
+    PawPrint::PawPrint (const vector<TYPE> &value) \
+    :PawPrint() { \
+        beginSequence(); \
+            for (auto v : value) { \
+                push##PUSH_TYPE(v); \
+            } \
+        endSequence(); \
+    }
+PAW_PRINT_VECTOR_CONSTRUCTOR(int   , Int   )
+PAW_PRINT_VECTOR_CONSTRUCTOR(double, Double)
+PAW_PRINT_VECTOR_CONSTRUCTOR(string, String)
+#undef PAW_PRINT_VECTOR_CONSTRUCTOR
+
 const PawPrint& PawPrint::operator = (const Cursor &cursor) {
     auto cursor_idx = cursor.idx();
     auto data_size = cursor.paw_print()->dataSize(cursor_idx);

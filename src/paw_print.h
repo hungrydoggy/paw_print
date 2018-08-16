@@ -140,6 +140,11 @@ public:
     PawPrint (double        value);
     PawPrint (const char   *value);
     PawPrint (const string &value);
+
+    PawPrint (const vector<int   > &value);
+    PawPrint (const vector<double> &value);
+    PawPrint (const vector<string> &value);
+
     ~PawPrint ();
 
     const PawPrint& operator = (const Cursor &cursor);
