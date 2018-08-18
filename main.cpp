@@ -134,10 +134,10 @@ static void _t_basic () {
 	assert(root["abc"]["b"].get(-1) == 2);
 	assert(root["abc"]["c"].get(-1) == 3);
 	assert(root["abc"]["d"].type() == 5);
-	assert(strcmp(root["abc"]["d"][0].get(""), "i") == 0);
-	assert(strcmp(root["abc"]["d"][1].get(""), "j") == 0);
-	assert(strcmp(root["abc"]["d"][2].get(""), "k") == 0);
-	assert(strcmp(root["abc"]["d"][3].get(""), "") == 0);
+	assert(root["abc"]["d"][0].get("") == "i");
+	assert(root["abc"]["d"][1].get("") == "j");
+	assert(root["abc"]["d"][2].get("") == "k");
+	assert(root["abc"]["d"][3].get("") == "5");
 	assert(root["abc"]["d"][3].get(-1) == 5);
 	assert(root["abc"]["d"][4].get(-2) == 6);
 	assert(root["abc"]["d"][5].get(-3) == 7);
@@ -151,9 +151,9 @@ static void _t_basic () {
 	assert(root["abc"]["f"][0]["first"].type() == PawPrint::Data::TYPE_MAP);
 	assert(root["abc"]["f"][0]["first"]["name"].type() == PawPrint::Data::TYPE_STRING);
 	assert(root["abc"]["f"][0]["first"]["value"].type() == PawPrint::Data::TYPE_INT);
-	assert(strcmp(root["abc"]["f"][0]["first"]["name"].get(""), "first") == 0);
+	assert(root["abc"]["f"][0]["first"]["name"].get("") == "first");
 	assert(root["abc"]["f"][0]["first"]["value"].get(-1) == 1);
-	assert(strcmp(root["abc"]["f"][1]["second"]["name"].get(""), "second") == 0);
+	assert(root["abc"]["f"][1]["second"]["name"].get("") == "second");
 	assert(root["abc"]["f"][1]["second"]["value"].get(-1) == 2);
 }
 
