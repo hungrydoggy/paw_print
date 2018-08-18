@@ -207,8 +207,7 @@ const char* PawPrint::Cursor::getKeyOfPair () const {
         auto key_idx = paw_print_->getKeyRawIdxOfPair(idx_);
         return paw_print_->getStrValue(key_idx);
     }else if (isMap() == true && size() > 0) {
-        auto key_idx = paw_print_->getKeyRawIdxOfPair((*this)[0].idx());
-        return paw_print_->getStrValue(key_idx);
+		return getKey(0);
     }
 
     return null;
@@ -219,8 +218,7 @@ PawPrint::Cursor PawPrint::Cursor::getValueOfPair () const {
         auto value_idx = paw_print_->getValueRawIdxOfPair(idx_);
         return Cursor(paw_print_, value_idx, holder_);
     }else if (isMap() == true && size() > 0) {
-        auto value_idx = paw_print_->getValueRawIdxOfPair((*this)[0].idx());
-        return Cursor(paw_print_, value_idx, holder_);
+        return (*this)[0];
     }
 
     return Cursor(paw_print_, -1, holder_);
