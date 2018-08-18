@@ -191,6 +191,12 @@ static int _findAndAddToken (
         const char c = text[idx];
         switch (c) {
             case 0:
+				if (idx > first_idx) {
+					auto is_ok = _addWordToken(
+						text, first_idx, idx - 1, indent, column, line, tokens);
+					if (is_ok == false)
+						return -1;
+				}
                 return idx;
 			case '\r':
             case ' ': {
