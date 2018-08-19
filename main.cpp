@@ -464,7 +464,7 @@ static void _t_load_green () {
 		"              \"middle\"\n" \
 		"            txt :\n" \
 		"              $text :\n" \
-		"                \"확 인\"\n" \
+		"                \"confirm\"\n" \
 		"            ver :\n" \
 		"              \"middle\"\n" \
 		"  cls :\n" \

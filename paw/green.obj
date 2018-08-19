@@ -54,6 +54,6 @@ Object:
                     bmf:
                         '$font' : 'bitmap_fonts/nanum_myeongjo_extra_bold.67.bmf'
                     txt:
-                        '$text' : '확 인'
+                        '$text' : 'confirm'
                     hor: 'middle'
                     ver: 'middle'
