@@ -1,0 +1,59 @@
+Object:
+    cls: 'Button'
+    nam: 'button'
+    col:
+        '$button_col': [1, 1, 1, 1]
+    chl:
+        - Object:
+            dra: false
+            nam: 'bg_gray'
+            vie:
+                NinePatch:
+                    img: 'images/ui/button/gray.png'
+                    lrt: [10, 10, 10, 10]
+                    siz: ['$width':400, '$height':80]
+        - Object:
+            #dra: false
+            nam: 'bg'
+            vie:
+                NinePatch:
+                    img: 'images/ui/button/green.png'
+                    lrt: [10, 10, 10, 10]
+                    siz: ['$width':400, '$height':80]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    hsz:
+                        - '!divide':
+                            ['$width':400, 2]
+                        - '!divide':
+                            ['$height':80, 2]
+                        - 0
+            pda:
+                ActionCall:
+                    roo: '..'
+                    act:
+                        SendMessage:
+                            dst:
+                                '$pda_dst': '/'
+                            nam:
+                                '$pda_msg': 'onButtonClicked'
+                            par:
+                                '$pda_par': []
+        - Object:
+            nam: 'text'
+            pos:
+                '$text_pos': [0, 0, 1]
+            scl:
+                '$text_scl': [0.7, 0.7, 1]
+            vie:
+                BitmapFontView:
+                    bmf:
+                        '$font' : 'bitmap_fonts/nanum_myeongjo_extra_bold.67.bmf'
+                    txt:
+                        '$text' : '확 인'
+                    hor: 'middle'
+                    ver: 'middle'
