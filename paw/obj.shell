@@ -1,0 +1,11 @@
+Scene:
+    phy:
+        BulletPhysics:
+    chl: 
+        - Camera:
+            nam: 'camera'
+            pos: [0, 0, 1000]
+            prj:
+                Projection:
+                    typ: 'orthogonal'
+        - '$this'
