@@ -530,6 +530,7 @@ void PawPrintLoader::_initParsingTable () {
             case TokenType::INDENT      : ss << "INDENT, "      ; break;
             case TokenType::DEDENT      : ss << "DEDENT, "      ; break;
             case TokenType::END_OF_FILE : ss << "END_OF_FILE, " ; break;
+            case TokenType::BOOL        : ss << "BOOL, "        ; break;
             case TokenType::INT         : ss << "INT, "         ; break;
             case TokenType::DOUBLE      : ss << "DOUBLE, "      ; break;
             case TokenType::STRING      : ss << "STRING, "      ; break;
@@ -867,7 +868,21 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    // Rule 21 : NODE -> int 
+    // Rule 21 : NODE -> bool 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        auto token = children[0]->token();
+        auto str = string(
+                text + token->first_idx,
+                token->last_idx - token->first_idx + 1);
+        paw->pushBool((str == "true")? true: false, token->column, token->line);
+    });
+
+    // Rule 22 : NODE -> int 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -884,7 +899,7 @@ static void _initLoaders () {
         paw->pushInt(v, token->column, token->line);
     });
 
-    // Rule 22 : NODE -> double 
+    // Rule 23 : NODE -> double 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -901,7 +916,7 @@ static void _initLoaders () {
         paw->pushDouble(v, token->column, token->line);
     });
 
-    // Rule 23 : NODE -> string 
+    // Rule 24 : NODE -> string 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -917,7 +932,7 @@ static void _initLoaders () {
                 token->line);
     });
 
-    // Rule 24 : NODE -> MAP 
+    // Rule 25 : NODE -> MAP 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -927,7 +942,7 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    // Rule 25 : NODE -> SEQUENCE 
+    // Rule 26 : NODE -> SEQUENCE 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -958,11 +973,12 @@ static void _initLoaders () {
     // Rule 18 : SEQUENCE -> SEQ_ELEM 
     // Rule 19 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED 
     // Rule 20 : SEQ_BLOCKED -> NODE 
-    // Rule 21 : NODE -> int 
-    // Rule 22 : NODE -> double 
-    // Rule 23 : NODE -> string 
-    // Rule 24 : NODE -> MAP 
-    // Rule 25 : NODE -> SEQUENCE 
+    // Rule 21 : NODE -> bool 
+    // Rule 22 : NODE -> int 
+    // Rule 23 : NODE -> double 
+    // Rule 24 : NODE -> string 
+    // Rule 25 : NODE -> MAP 
+    // Rule 26 : NODE -> SEQUENCE 
 
 }
 

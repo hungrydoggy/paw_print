@@ -190,7 +190,7 @@ string PawPrint::Cursor::toString (int indent, int indent_inc, bool ignore_inden
             ss << "null" << endl;
             break;
         case PawPrint::Data::TYPE_BOOL:
-            ss << get(false) << endl;
+            ss << ((get(false) == true)? "true": "false") << endl;
             break;
         case PawPrint::Data::TYPE_INT:
             ss << get(0) << endl;
@@ -202,6 +202,8 @@ string PawPrint::Cursor::toString (int indent, int indent_inc, bool ignore_inden
             ss << "\"" << get("") << "\"" << endl;
             break;
         case PawPrint::Data::TYPE_SEQUENCE:
+            if (size() <= 0)
+                ss << "[ ]" << endl;
 			for (int i = 0; i < size(); ++i) {
 				if (i != 0) {
 					for (int i = 0; i<indent; ++i)
@@ -211,6 +213,8 @@ string PawPrint::Cursor::toString (int indent, int indent_inc, bool ignore_inden
 			}
             break;
         case PawPrint::Data::TYPE_MAP:
+            if (size() <= 0)
+                ss << "{ }" << endl;
             for (int i=0; i<size(); ++i) {
 				if (i != 0) {
 					for (int i = 0; i<indent; ++i)

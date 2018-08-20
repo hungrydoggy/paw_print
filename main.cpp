@@ -207,7 +207,8 @@ void _t_load_map_paws() {
 		"  \"2\"\n" \
 		"k :\n" \
 		"  \"3\"\n",
-		"a :\n  ",
+        "a :\n" \
+        "  { }\n",
 		"a :\n" \
 		"  b :\n" \
 		"    \"abc\"\n" \
@@ -264,77 +265,79 @@ static void _t_loadParsingTree () {
     auto table = ParsingTable(binary);
     //cout << table.toString();
     auto table_correct = 
-        "##### Rules\n" \
-        "# Rule 0 : S' -> S \n" \
-        "# Rule 1 : S -> NODE \n" \
-        "# Rule 2 : KV -> string colon #indent NODE #dedent \n" \
-        "# Rule 3 : KV -> string colon NODE \n" \
-        "# Rule 4 : KV -> string colon #indent #dedent \n" \
-        "# Rule 5 : KV -> string colon \n" \
-        "# Rule 6 : MAP -> curly_open curly_close \n" \
-        "# Rule 7 : MAP -> curly_open MAP_BLOCKED curly_close \n" \
-        "# Rule 8 : MAP -> KV MAP \n" \
-        "# Rule 9 : MAP -> KV \n" \
-        "# Rule 10 : KV_BLOCKED -> string colon NODE \n" \
-        "# Rule 11 : MAP_BLOCKED -> KV_BLOCKED \n" \
-        "# Rule 12 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED \n" \
-        "# Rule 13 : SEQ_ELEM -> dash NODE \n" \
-        "# Rule 14 : SEQ_ELEM -> dash #indent NODE #dedent \n" \
-        "# Rule 15 : SEQUENCE -> square_open square_close \n" \
-        "# Rule 16 : SEQUENCE -> square_open SEQ_BLOCKED square_close \n" \
-        "# Rule 17 : SEQUENCE -> SEQ_ELEM SEQUENCE \n" \
-        "# Rule 18 : SEQUENCE -> SEQ_ELEM \n" \
-        "# Rule 19 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED \n" \
-        "# Rule 20 : SEQ_BLOCKED -> NODE \n" \
-        "# Rule 21 : NODE -> int \n" \
-        "# Rule 22 : NODE -> double \n" \
-        "# Rule 23 : NODE -> string \n" \
-        "# Rule 24 : NODE -> MAP \n" \
-        "# Rule 25 : NODE -> SEQUENCE \n" \
-        "##### Table\n" \
-        "    |   $ | #dedent | #indent | colon | comma | curly_close | curly_open | dash | double | int | square_close | square_open | string |  KV | KV_BLOCKED |  MAP | MAP_BLOCKED | NODE |   S | SEQUENCE | SEQ_BLOCKED | SEQ_ELEM | \n" \
-        "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n" \
-        "  0 |     |         |         |       |       |             |         s6 |   s2 |     s5 |  s4 |              |          s8 |     s3 | go1 |            |  go7 |             | go10 | go9 |     go12 |             |     go11 | \n" \
-        "  1 |  r9 |      r9 |         |       |    r9 |          r9 |         s6 |   r9 |        |     |           r9 |          r9 |    s13 | go1 |            | go14 |             |      |     |          |             |          | \n" \
-        "  2 |     |         |     s15 |       |       |             |         s6 |   s2 |     s5 |  s4 |              |          s8 |     s3 | go1 |            |  go7 |             | go16 |     |     go12 |             |     go11 | \n" \
-        "  3 | r23 |     r23 |         |   s17 |   r23 |         r23 |        r23 |  r23 |        |     |          r23 |         r23 |    r23 |     |            |      |             |      |     |          |             |          | \n" \
-        "  4 | r21 |     r21 |         |       |   r21 |         r21 |        r21 |  r21 |        |     |          r21 |         r21 |    r21 |     |            |      |             |      |     |          |             |          | \n" \
-        "  5 | r22 |     r22 |         |       |   r22 |         r22 |        r22 |  r22 |        |     |          r22 |         r22 |    r22 |     |            |      |             |      |     |          |             |          | \n" \
-        "  6 |     |         |         |       |       |         s19 |            |      |        |     |              |             |    s18 |     |       go20 |      |        go21 |      |     |          |             |          | \n" \
-        "  7 | r24 |     r24 |         |       |   r24 |         r24 |        r24 |  r24 |        |     |          r24 |         r24 |    r24 |     |            |      |             |      |     |          |             |          | \n" \
-        "  8 |     |         |         |       |       |             |         s6 |   s2 |     s5 |  s4 |          s22 |          s8 |     s3 | go1 |            |  go7 |             | go23 |     |     go12 |        go24 |     go11 | \n" \
-        "  9 | acc |         |         |       |       |             |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 10 |  r1 |         |         |       |       |             |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 11 | r18 |     r18 |         |       |   r18 |         r18 |        r18 |   s2 |        |     |          r18 |          s8 |    r18 |     |            |      |             |      |     |     go25 |             |     go11 | \n" \
-        " 12 | r25 |     r25 |         |       |   r25 |         r25 |        r25 |  r25 |        |     |          r25 |         r25 |    r25 |     |            |      |             |      |     |          |             |          | \n" \
-        " 13 |     |         |         |   s17 |       |             |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 14 |  r8 |      r8 |         |       |    r8 |          r8 |         r8 |   r8 |        |     |           r8 |          r8 |     r8 |     |            |      |             |      |     |          |             |          | \n" \
-        " 15 |     |         |         |       |       |             |         s6 |   s2 |     s5 |  s4 |              |          s8 |     s3 | go1 |            |  go7 |             | go26 |     |     go12 |             |     go11 | \n" \
-        " 16 | r13 |     r13 |         |       |   r13 |         r13 |        r13 |  r13 |        |     |          r13 |         r13 |    r13 |     |            |      |             |      |     |          |             |          | \n" \
-        " 17 |  r5 |      r5 |     s27 |       |    r5 |          r5 |         s6 |   s2 |     s5 |  s4 |           r5 |          s8 |     s3 | go1 |            |  go7 |             | go28 |     |     go12 |             |     go11 | \n" \
-        " 18 |     |         |         |   s29 |       |             |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 19 |  r6 |      r6 |         |       |    r6 |          r6 |         r6 |   r6 |        |     |           r6 |          r6 |     r6 |     |            |      |             |      |     |          |             |          | \n" \
-        " 20 |     |         |         |       |   s30 |         r11 |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 21 |     |         |         |       |       |         s31 |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 22 | r15 |     r15 |         |       |   r15 |         r15 |        r15 |  r15 |        |     |          r15 |         r15 |    r15 |     |            |      |             |      |     |          |             |          | \n" \
-        " 23 |     |         |         |       |   s32 |             |            |      |        |     |          r20 |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 24 |     |         |         |       |       |             |            |      |        |     |          s33 |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 25 | r17 |     r17 |         |       |   r17 |         r17 |        r17 |  r17 |        |     |          r17 |         r17 |    r17 |     |            |      |             |      |     |          |             |          | \n" \
-        " 26 |     |     s34 |         |       |       |             |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 27 |     |     s35 |         |       |       |             |         s6 |   s2 |     s5 |  s4 |              |          s8 |     s3 | go1 |            |  go7 |             | go36 |     |     go12 |             |     go11 | \n" \
-        " 28 |  r3 |      r3 |         |       |    r3 |          r3 |         r3 |   r3 |        |     |           r3 |          r3 |     r3 |     |            |      |             |      |     |          |             |          | \n" \
-        " 29 |     |         |         |       |       |             |         s6 |   s2 |     s5 |  s4 |              |          s8 |     s3 | go1 |            |  go7 |             | go37 |     |     go12 |             |     go11 | \n" \
-        " 30 |     |         |         |       |       |             |            |      |        |     |              |             |    s18 |     |       go20 |      |        go38 |      |     |          |             |          | \n" \
-        " 31 |  r7 |      r7 |         |       |    r7 |          r7 |         r7 |   r7 |        |     |           r7 |          r7 |     r7 |     |            |      |             |      |     |          |             |          | \n" \
-        " 32 |     |         |         |       |       |             |         s6 |   s2 |     s5 |  s4 |              |          s8 |     s3 | go1 |            |  go7 |             | go23 |     |     go12 |        go39 |     go11 | \n" \
-        " 33 | r16 |     r16 |         |       |   r16 |         r16 |        r16 |  r16 |        |     |          r16 |         r16 |    r16 |     |            |      |             |      |     |          |             |          | \n" \
-        " 34 | r14 |     r14 |         |       |   r14 |         r14 |        r14 |  r14 |        |     |          r14 |         r14 |    r14 |     |            |      |             |      |     |          |             |          | \n" \
-        " 35 |  r4 |      r4 |         |       |    r4 |          r4 |         r4 |   r4 |        |     |           r4 |          r4 |     r4 |     |            |      |             |      |     |          |             |          | \n" \
-        " 36 |     |     s40 |         |       |       |             |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 37 |     |         |         |       |   r10 |         r10 |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 38 |     |         |         |       |       |         r12 |            |      |        |     |              |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 39 |     |         |         |       |       |             |            |      |        |     |          r19 |             |        |     |            |      |             |      |     |          |             |          | \n" \
-        " 40 |  r2 |      r2 |         |       |    r2 |          r2 |         r2 |   r2 |        |     |           r2 |          r2 |     r2 |     |            |      |             |      |     |          |             |          | \n";
+		"##### Rules\n" \
+		"# Rule 0 : S' -> S \n" \
+		"# Rule 1 : S -> NODE \n" \
+		"# Rule 2 : KV -> string colon #indent NODE #dedent \n" \
+		"# Rule 3 : KV -> string colon NODE \n" \
+		"# Rule 4 : KV -> string colon #indent #dedent \n" \
+		"# Rule 5 : KV -> string colon \n" \
+		"# Rule 6 : MAP -> curly_open curly_close \n" \
+		"# Rule 7 : MAP -> curly_open MAP_BLOCKED curly_close \n" \
+		"# Rule 8 : MAP -> KV MAP \n" \
+		"# Rule 9 : MAP -> KV \n" \
+		"# Rule 10 : KV_BLOCKED -> string colon NODE \n" \
+		"# Rule 11 : MAP_BLOCKED -> KV_BLOCKED \n" \
+		"# Rule 12 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED \n" \
+		"# Rule 13 : SEQ_ELEM -> dash NODE \n" \
+		"# Rule 14 : SEQ_ELEM -> dash #indent NODE #dedent \n" \
+		"# Rule 15 : SEQUENCE -> square_open square_close \n" \
+		"# Rule 16 : SEQUENCE -> square_open SEQ_BLOCKED square_close \n" \
+		"# Rule 17 : SEQUENCE -> SEQ_ELEM SEQUENCE \n" \
+		"# Rule 18 : SEQUENCE -> SEQ_ELEM \n" \
+		"# Rule 19 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED \n" \
+		"# Rule 20 : SEQ_BLOCKED -> NODE \n" \
+		"# Rule 21 : NODE -> bool \n" \
+		"# Rule 22 : NODE -> int \n" \
+		"# Rule 23 : NODE -> double \n" \
+		"# Rule 24 : NODE -> string \n" \
+		"# Rule 25 : NODE -> MAP \n" \
+		"# Rule 26 : NODE -> SEQUENCE \n" \
+		"##### Table\n" \
+		"    |   $ | #dedent | #indent | bool | colon | comma | curly_close | curly_open | dash | double | int | square_close | square_open | string |  KV | KV_BLOCKED |  MAP | MAP_BLOCKED | NODE |    S | SEQUENCE | SEQ_BLOCKED | SEQ_ELEM | \n" \
+		"----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n" \
+		"  0 |     |         |         |   s8 |       |       |             |         s6 |   s5 |     s1 |  s9 |              |          s7 |     s2 | go4 |            |  go3 |             | go10 | go11 |     go13 |             |     go12 | \n" \
+		"  1 | r23 |     r23 |         |      |       |   r23 |         r23 |        r23 |  r23 |        |     |          r23 |         r23 |    r23 |     |            |      |             |      |      |          |             |          | \n" \
+		"  2 | r24 |     r24 |         |      |   s14 |   r24 |         r24 |        r24 |  r24 |        |     |          r24 |         r24 |    r24 |     |            |      |             |      |      |          |             |          | \n" \
+		"  3 | r25 |     r25 |         |      |       |   r25 |         r25 |        r25 |  r25 |        |     |          r25 |         r25 |    r25 |     |            |      |             |      |      |          |             |          | \n" \
+		"  4 |  r9 |      r9 |         |      |       |    r9 |          r9 |         s6 |   r9 |        |     |           r9 |          r9 |    s15 | go4 |            | go16 |             |      |      |          |             |          | \n" \
+		"  5 |     |         |     s17 |   s8 |       |       |             |         s6 |   s5 |     s1 |  s9 |              |          s7 |     s2 | go4 |            |  go3 |             | go18 |      |     go13 |             |     go12 | \n" \
+		"  6 |     |         |         |      |       |       |         s22 |            |      |        |     |              |             |    s21 |     |       go19 |      |        go20 |      |      |          |             |          | \n" \
+		"  7 |     |         |         |   s8 |       |       |             |         s6 |   s5 |     s1 |  s9 |          s23 |          s7 |     s2 | go4 |            |  go3 |             | go25 |      |     go13 |        go24 |     go12 | \n" \
+		"  8 | r21 |     r21 |         |      |       |   r21 |         r21 |        r21 |  r21 |        |     |          r21 |         r21 |    r21 |     |            |      |             |      |      |          |             |          | \n" \
+		"  9 | r22 |     r22 |         |      |       |   r22 |         r22 |        r22 |  r22 |        |     |          r22 |         r22 |    r22 |     |            |      |             |      |      |          |             |          | \n" \
+		" 10 |  r1 |         |         |      |       |       |             |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 11 | acc |         |         |      |       |       |             |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 12 | r18 |     r18 |         |      |       |   r18 |         r18 |        r18 |   s5 |        |     |          r18 |          s7 |    r18 |     |            |      |             |      |      |     go26 |             |     go12 | \n" \
+		" 13 | r26 |     r26 |         |      |       |   r26 |         r26 |        r26 |  r26 |        |     |          r26 |         r26 |    r26 |     |            |      |             |      |      |          |             |          | \n" \
+		" 14 |  r5 |      r5 |     s27 |   s8 |       |    r5 |          r5 |         s6 |   s5 |     s1 |  s9 |           r5 |          s7 |     s2 | go4 |            |  go3 |             | go28 |      |     go13 |             |     go12 | \n" \
+		" 15 |     |         |         |      |   s14 |       |             |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 16 |  r8 |      r8 |         |      |       |    r8 |          r8 |         r8 |   r8 |        |     |           r8 |          r8 |     r8 |     |            |      |             |      |      |          |             |          | \n" \
+		" 17 |     |         |         |   s8 |       |       |             |         s6 |   s5 |     s1 |  s9 |              |          s7 |     s2 | go4 |            |  go3 |             | go29 |      |     go13 |             |     go12 | \n" \
+		" 18 | r13 |     r13 |         |      |       |   r13 |         r13 |        r13 |  r13 |        |     |          r13 |         r13 |    r13 |     |            |      |             |      |      |          |             |          | \n" \
+		" 19 |     |         |         |      |       |   s30 |         r11 |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 20 |     |         |         |      |       |       |         s31 |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 21 |     |         |         |      |   s32 |       |             |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 22 |  r6 |      r6 |         |      |       |    r6 |          r6 |         r6 |   r6 |        |     |           r6 |          r6 |     r6 |     |            |      |             |      |      |          |             |          | \n" \
+		" 23 | r15 |     r15 |         |      |       |   r15 |         r15 |        r15 |  r15 |        |     |          r15 |         r15 |    r15 |     |            |      |             |      |      |          |             |          | \n" \
+		" 24 |     |         |         |      |       |       |             |            |      |        |     |          s33 |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 25 |     |         |         |      |       |   s34 |             |            |      |        |     |          r20 |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 26 | r17 |     r17 |         |      |       |   r17 |         r17 |        r17 |  r17 |        |     |          r17 |         r17 |    r17 |     |            |      |             |      |      |          |             |          | \n" \
+		" 27 |     |     s35 |         |   s8 |       |       |             |         s6 |   s5 |     s1 |  s9 |              |          s7 |     s2 | go4 |            |  go3 |             | go36 |      |     go13 |             |     go12 | \n" \
+		" 28 |  r3 |      r3 |         |      |       |    r3 |          r3 |         r3 |   r3 |        |     |           r3 |          r3 |     r3 |     |            |      |             |      |      |          |             |          | \n" \
+		" 29 |     |     s37 |         |      |       |       |             |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 30 |     |         |         |      |       |       |             |            |      |        |     |              |             |    s21 |     |       go19 |      |        go38 |      |      |          |             |          | \n" \
+		" 31 |  r7 |      r7 |         |      |       |    r7 |          r7 |         r7 |   r7 |        |     |           r7 |          r7 |     r7 |     |            |      |             |      |      |          |             |          | \n" \
+		" 32 |     |         |         |   s8 |       |       |             |         s6 |   s5 |     s1 |  s9 |              |          s7 |     s2 | go4 |            |  go3 |             | go39 |      |     go13 |             |     go12 | \n" \
+		" 33 | r16 |     r16 |         |      |       |   r16 |         r16 |        r16 |  r16 |        |     |          r16 |         r16 |    r16 |     |            |      |             |      |      |          |             |          | \n" \
+		" 34 |     |         |         |   s8 |       |       |             |         s6 |   s5 |     s1 |  s9 |              |          s7 |     s2 | go4 |            |  go3 |             | go25 |      |     go13 |        go40 |     go12 | \n" \
+		" 35 |  r4 |      r4 |         |      |       |    r4 |          r4 |         r4 |   r4 |        |     |           r4 |          r4 |     r4 |     |            |      |             |      |      |          |             |          | \n" \
+		" 36 |     |     s41 |         |      |       |       |             |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 37 | r14 |     r14 |         |      |       |   r14 |         r14 |        r14 |  r14 |        |     |          r14 |         r14 |    r14 |     |            |      |             |      |      |          |             |          | \n" \
+		" 38 |     |         |         |      |       |       |         r12 |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 39 |     |         |         |      |       |   r10 |         r10 |            |      |        |     |              |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 40 |     |         |         |      |       |       |             |            |      |        |     |          r19 |             |        |     |            |      |             |      |      |          |             |          | \n" \
+		" 41 |  r2 |      r2 |         |      |       |    r2 |          r2 |         r2 |   r2 |        |     |           r2 |          r2 |     r2 |     |            |      |             |      |      |          |             |          | \n";
     assert(table.toString() == table_correct);
 
 }
@@ -375,111 +378,112 @@ static void _t_load_green () {
     assert(paw != null);
 
     auto correct =
-		"Object :\n" \
-		"  chl :\n" \
-		"    - Object :\n" \
-		"        dra :\n" \
-		"          \"false\"\n" \
-		"        nam :\n" \
-		"          \"bg_gray\"\n" \
-		"        vie :\n" \
-		"          NinePatch :\n" \
-		"            img :\n" \
-		"              \"images/ui/button/gray.png\"\n" \
-		"            lrt :\n" \
-		"              - 10\n" \
-		"              - 10\n" \
-		"              - 10\n" \
-		"              - 10\n" \
-		"            siz :\n" \
-		"              - $width :\n" \
-		"                  400\n" \
-		"              - $height :\n" \
-		"                  80\n" \
-		"    - Object :\n" \
-		"        bdy :\n" \
-		"          BulletBody :\n" \
-		"            mas :\n" \
-		"              0\n" \
-		"        nam :\n" \
-		"          \"bg\"\n" \
-		"        pda :\n" \
-		"          ActionCall :\n" \
-		"            act :\n" \
-		"              SendMessage :\n" \
-		"                dst :\n" \
-		"                  $pda_dst :\n" \
-		"                    \"/\"\n" \
-		"                nam :\n" \
-		"                  $pda_msg :\n" \
-		"                    \"onButtonClicked\"\n" \
-		"                par :\n" \
-		"                  $pda_par :\n" \
-		"                                roo :\n" \
-		"              \"..\"\n" \
-		"        shp :\n" \
-		"          - BulletShape :\n" \
-		"              cls :\n" \
-		"                \"Box\"\n" \
-		"              hsz :\n" \
-		"                - !divide :\n" \
-		"                    - $width :\n" \
-		"                        400\n" \
-		"                    - 2\n" \
-		"                - !divide :\n" \
-		"                    - $height :\n" \
-		"                        80\n" \
-		"                    - 2\n" \
-		"                - 0\n" \
-		"        vie :\n" \
-		"          NinePatch :\n" \
-		"            img :\n" \
-		"              \"images/ui/button/green.png\"\n" \
-		"            lrt :\n" \
-		"              - 10\n" \
-		"              - 10\n" \
-		"              - 10\n" \
-		"              - 10\n" \
-		"            siz :\n" \
-		"              - $width :\n" \
-		"                  400\n" \
-		"              - $height :\n" \
-		"                  80\n" \
-		"    - Object :\n" \
-		"        nam :\n" \
-		"          \"text\"\n" \
-		"        pos :\n" \
-		"          $text_pos :\n" \
-		"            - 0\n" \
-		"            - 0\n" \
-		"            - 1\n" \
-		"        scl :\n" \
-		"          $text_scl :\n" \
-		"            - 0.70000000\n" \
-		"            - 0.70000000\n" \
-		"            - 1\n" \
-		"        vie :\n" \
-		"          BitmapFontView :\n" \
-		"            bmf :\n" \
-		"              $font :\n" \
-		"                \"bitmap_fonts/nanum_myeongjo_extra_bold.67.bmf\"\n" \
-		"            hor :\n" \
-		"              \"middle\"\n" \
-		"            txt :\n" \
-		"              $text :\n" \
-		"                \"confirm\"\n" \
-		"            ver :\n" \
-		"              \"middle\"\n" \
-		"  cls :\n" \
-		"    \"Button\"\n" \
-		"  col :\n" \
-		"    $button_col :\n" \
-		"      - 1\n" \
-		"      - 1\n" \
-		"      - 1\n" \
-		"      - 1\n" \
-		"  nam :\n" \
-		"    \"button\"\n";
+        "Object :\n" \
+        "  chl :\n" \
+        "    - Object :\n" \
+        "        dra :\n" \
+        "          true\n" \
+        "        nam :\n" \
+        "          \"bg_gray\"\n" \
+        "        vie :\n" \
+        "          NinePatch :\n" \
+        "            img :\n" \
+        "              \"images/ui/button/gray.png\"\n" \
+        "            lrt :\n" \
+        "              - 10\n" \
+        "              - 10\n" \
+        "              - 10\n" \
+        "              - 10\n" \
+        "            siz :\n" \
+        "              - $width :\n" \
+        "                  400\n" \
+        "              - $height :\n" \
+        "                  80\n" \
+        "    - Object :\n" \
+        "        bdy :\n" \
+        "          BulletBody :\n" \
+        "            mas :\n" \
+        "              0\n" \
+        "        nam :\n" \
+        "          \"bg\"\n" \
+        "        pda :\n" \
+        "          ActionCall :\n" \
+        "            act :\n" \
+        "              SendMessage :\n" \
+        "                dst :\n" \
+        "                  $pda_dst :\n" \
+        "                    \"/\"\n" \
+        "                nam :\n" \
+        "                  $pda_msg :\n" \
+        "                    \"onButtonClicked\"\n" \
+        "                par :\n" \
+        "                  $pda_par :\n" \
+        "                    [ ]\n" \
+        "            roo :\n" \
+        "              \"..\"\n" \
+        "        shp :\n" \
+        "          - BulletShape :\n" \
+        "              cls :\n" \
+        "                \"Box\"\n" \
+        "              hsz :\n" \
+        "                - !divide :\n" \
+        "                    - $width :\n" \
+        "                        400\n" \
+        "                    - 2\n" \
+        "                - !divide :\n" \
+        "                    - $height :\n" \
+        "                        80\n" \
+        "                    - 2\n" \
+        "                - 0\n" \
+        "        vie :\n" \
+        "          NinePatch :\n" \
+        "            img :\n" \
+        "              \"images/ui/button/green.png\"\n" \
+        "            lrt :\n" \
+        "              - 10\n" \
+        "              - 10\n" \
+        "              - 10\n" \
+        "              - 10\n" \
+        "            siz :\n" \
+        "              - $width :\n" \
+        "                  400\n" \
+        "              - $height :\n" \
+        "                  80\n" \
+        "    - Object :\n" \
+        "        nam :\n" \
+        "          \"text\"\n" \
+        "        pos :\n" \
+        "          $text_pos :\n" \
+        "            - 0\n" \
+        "            - 0\n" \
+        "            - 1\n" \
+        "        scl :\n" \
+        "          $text_scl :\n" \
+        "            - 0.70000000\n" \
+        "            - 0.70000000\n" \
+        "            - 1\n" \
+        "        vie :\n" \
+        "          BitmapFontView :\n" \
+        "            bmf :\n" \
+        "              $font :\n" \
+        "                \"bitmap_fonts/nanum_myeongjo_extra_bold.67.bmf\"\n" \
+        "            hor :\n" \
+        "              \"middle\"\n" \
+        "            txt :\n" \
+        "              $text :\n" \
+        "                \"confirm\"\n" \
+        "            ver :\n" \
+        "              \"middle\"\n" \
+        "  cls :\n" \
+        "    \"Button\"\n" \
+        "  col :\n" \
+        "    $button_col :\n" \
+        "      - 1\n" \
+        "      - 1\n" \
+        "      - 1\n" \
+        "      - 1\n" \
+        "  nam :\n" \
+        "    \"button\"\n";
     assert(paw->root().toString() == correct);
 }
 
