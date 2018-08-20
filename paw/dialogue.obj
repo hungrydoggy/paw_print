@@ -1,0 +1,97 @@
+Object:
+    cls: 'Dialogue'
+    nam: 'dialogue'
+    pos: [0, -665, 0]
+    dbt: true
+    dsg: 20000
+    #dat:
+    #    'dialogue_data_path': 'fetched/quest/jungle/feeding_cat/dialogue/kr'
+    chl:
+        - Object:
+            nam: 'face'
+            pos: [-260, 200, -1]
+        - Object:
+            nam: 'bg'
+            scl: [0.5, 0.5, 1]
+            vie:
+                NinePatch:
+                    img: 'images/card/bg/card_basic.png'
+                    lrt: [120, 120, 120, 120]
+                    siz:
+                        - '!minus':
+                            - '!multiply':
+                                - '$game_width'
+                                - 2
+                            - 80
+                        - 800
+        - Object:
+            nam: 'title_bg'
+            pos: [-290, 150, 1]
+            vie:
+                NinePatch:
+                    img: 'images/ui/dialogue/name_bg.png'
+                    lrt: [60, 60, 60, 60]
+                    siz:
+                        - 400
+                        - 140
+        - Object:
+            nam: 'title'
+            pos: [-295, 155, 2]
+            col: [0, 0, 0, 1]
+            scl: [0.9, 0.9, 1]
+            vie:
+                BitmapFontView:
+                    bmf: 'bitmap_fonts/nanum_myeongjo_extra_bold.67.bmf'
+                    hor: 'middle'
+                    ver: 'middle'
+                    txt: "말하는 토템"
+        - Object:
+            nam: 'text'
+            pos: [-410, -40, 1]
+            scl: [1.1, 1.1, 1]
+            col: [0.3, 0.3, 0.3, 1]
+            vie:
+                BitmapFontView:
+                    bmf: 'bitmap_fonts/nanum_myeongjo_bold.42.bmf'
+                    hor: 'left'
+                    ver: 'middle'
+                    txt: "가나다라\n가나다라\n가나다라"
+                    lin: 1.2
+        - Object:
+            nam: 'front_panel'
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    hsz:
+                        - '!multiply':
+                            - '$game_width'
+                            - 2
+                        - '!multiply':
+                            - '$game_height'
+                            - 2
+                        - 0
+            pda:
+                ActionCall:
+                    act:
+                        SendMessage:
+                            dst: '..'
+                            nam: 'onTap'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

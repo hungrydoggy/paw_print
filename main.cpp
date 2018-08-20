@@ -517,6 +517,17 @@ static void _t_load_obj_shell () {
     assert(paw->root().toString() == correct);
 }
 
+static void _t_load_dialogue () {
+    cout << "load dialogue" << endl;
+#if _WINDOWS
+    auto paw = _loadPaw("../../paw/dialogue.obj");
+#else
+    auto paw = _loadPaw("../paw/dialogue.obj");
+#endif
+    assert(paw != null);
+    cout << paw->root().toString();
+}
+
 int main () {
     _t_basic();
     _t_loadParsingTree();
@@ -524,5 +535,6 @@ int main () {
 	_t_load_boss_appear_snake();
 	_t_load_green();
 	_t_load_obj_shell();
+	_t_load_dialogue();
     return 0;
 }

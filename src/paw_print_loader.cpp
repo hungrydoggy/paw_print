@@ -35,9 +35,13 @@ static bool _addNumberToken (
         unsigned short line,
         vector<Token> &tokens) {
 
+    auto num_first_idx = first_idx;
+    if (text[first_idx] == '-')
+        ++num_first_idx;
+
     // find point idx and check number format
     auto point_idx = last_idx + 1;
-    for (int ci=first_idx; ci<=last_idx; ++ci) {
+    for (int ci=num_first_idx; ci<=last_idx; ++ci) {
         auto c = text[ci];
         if (c == '.') {
             if (point_idx <= last_idx) {
@@ -99,6 +103,8 @@ static bool _addWordToken (
         vector<Token> &tokens) {
 
     if (text[first_idx] >= '0' && text[first_idx] <= '9')
+        return _addNumberToken(text, first_idx, last_idx, indent, column, line, tokens);
+    else if (text[first_idx] == '-' && text[first_idx+1] >= '0' && text[first_idx+1] <= '9')
         return _addNumberToken(text, first_idx, last_idx, indent, column, line, tokens);
     else
         return _addStringToken(text, first_idx, last_idx, indent, column, line, true, tokens);
@@ -267,6 +273,10 @@ static int _findAndAddToken (
                 return idx + 1;
             }
             case '-': {
+                auto next = text[idx + 1];
+                if (next != ' ' && next != '\r' && next != '\n')
+                    continue;
+
                 if (idx > first_idx) {
                     auto is_ok = _addWordToken(
                             text, first_idx, idx - 1, indent, column, line, tokens);
