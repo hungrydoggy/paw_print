@@ -352,19 +352,19 @@ static void _t_load_boss_appear_snake () {
     assert(paw != null);
 
     auto correct =
-		"@objects/ui/popup/boss_appear.obj :\n" \
-		"  ref :\n" \
-		"    boss_img :\n" \
-		"      \"images/ui/popup/snake_art.png\"\n" \
-		"    icon_img :\n" \
-		"      \"images/status/icons/inven_ico_snake_poison.png\"\n" \
-		"    icon_pos :\n" \
-		"      - 0\n" \
-		"      - 10.50000000\n" \
-		"      - 1\n" \
-		"    icon_siz :\n" \
-		"      - 79\n" \
-		"      - 0\n";
+        "@objects/ui/popup/boss_appear.obj :\n" \
+        "  ref :\n" \
+        "    boss_img :\n" \
+        "      \"images/ui/popup/snake_art.png\"\n" \
+        "    icon_img :\n" \
+        "      \"images/status/icons/inven_ico_snake_poison.png\"\n" \
+        "    icon_siz :\n" \
+        "      - 79\n" \
+        "      - 0\n" \
+        "    icon_pos :\n" \
+        "      - 0\n" \
+        "      - 10.50000000\n" \
+        "      - 1\n";
     assert(paw->root().toString() == correct);
 }
 
@@ -379,6 +379,16 @@ static void _t_load_green () {
 
     auto correct =
         "Object :\n" \
+        "  cls :\n" \
+        "    \"Button\"\n" \
+        "  nam :\n" \
+        "    \"button\"\n" \
+        "  col :\n" \
+        "    $button_col :\n" \
+        "      - 1\n" \
+        "      - 1\n" \
+        "      - 1\n" \
+        "      - 1\n" \
         "  chl :\n" \
         "    - Object :\n" \
         "        dra :\n" \
@@ -400,41 +410,8 @@ static void _t_load_green () {
         "              - $height :\n" \
         "                  80\n" \
         "    - Object :\n" \
-        "        bdy :\n" \
-        "          BulletBody :\n" \
-        "            mas :\n" \
-        "              0\n" \
         "        nam :\n" \
         "          \"bg\"\n" \
-        "        pda :\n" \
-        "          ActionCall :\n" \
-        "            act :\n" \
-        "              SendMessage :\n" \
-        "                dst :\n" \
-        "                  $pda_dst :\n" \
-        "                    \"/\"\n" \
-        "                nam :\n" \
-        "                  $pda_msg :\n" \
-        "                    \"onButtonClicked\"\n" \
-        "                par :\n" \
-        "                  $pda_par :\n" \
-        "                    [ ]\n" \
-        "            roo :\n" \
-        "              \"..\"\n" \
-        "        shp :\n" \
-        "          - BulletShape :\n" \
-        "              cls :\n" \
-        "                \"Box\"\n" \
-        "              hsz :\n" \
-        "                - !divide :\n" \
-        "                    - $width :\n" \
-        "                        400\n" \
-        "                    - 2\n" \
-        "                - !divide :\n" \
-        "                    - $height :\n" \
-        "                        80\n" \
-        "                    - 2\n" \
-        "                - 0\n" \
         "        vie :\n" \
         "          NinePatch :\n" \
         "            img :\n" \
@@ -449,6 +426,39 @@ static void _t_load_green () {
         "                  400\n" \
         "              - $height :\n" \
         "                  80\n" \
+        "        bdy :\n" \
+        "          BulletBody :\n" \
+        "            mas :\n" \
+        "              0\n" \
+        "        shp :\n" \
+        "          - BulletShape :\n" \
+        "              cls :\n" \
+        "                \"Box\"\n" \
+        "              hsz :\n" \
+        "                - !divide :\n" \
+        "                    - $width :\n" \
+        "                        400\n" \
+        "                    - 2\n" \
+        "                - !divide :\n" \
+        "                    - $height :\n" \
+        "                        80\n" \
+        "                    - 2\n" \
+        "                - 0\n" \
+        "        pda :\n" \
+        "          ActionCall :\n" \
+        "            roo :\n" \
+        "              \"..\"\n" \
+        "            act :\n" \
+        "              SendMessage :\n" \
+        "                dst :\n" \
+        "                  $pda_dst :\n" \
+        "                    \"/\"\n" \
+        "                nam :\n" \
+        "                  $pda_msg :\n" \
+        "                    \"onButtonClicked\"\n" \
+        "                par :\n" \
+        "                  $pda_par :\n" \
+        "                    [ ]\n" \
         "    - Object :\n" \
         "        nam :\n" \
         "          \"text\"\n" \
@@ -467,23 +477,13 @@ static void _t_load_green () {
         "            bmf :\n" \
         "              $font :\n" \
         "                \"bitmap_fonts/nanum_myeongjo_extra_bold.67.bmf\"\n" \
-        "            hor :\n" \
-        "              \"middle\"\n" \
         "            txt :\n" \
         "              $text :\n" \
         "                \"confirm\"\n" \
-        "            ver :\n" \
+        "            hor :\n" \
         "              \"middle\"\n" \
-        "  cls :\n" \
-        "    \"Button\"\n" \
-        "  col :\n" \
-        "    $button_col :\n" \
-        "      - 1\n" \
-        "      - 1\n" \
-        "      - 1\n" \
-        "      - 1\n" \
-        "  nam :\n" \
-        "    \"button\"\n";
+        "            ver :\n" \
+        "              \"middle\"\n";
     assert(paw->root().toString() == correct);
 }
 
@@ -497,23 +497,23 @@ static void _t_load_obj_shell () {
     assert(paw != null);
 
     auto correct =
-		"Scene :\n" \
-		"  chl :\n" \
-		"    - Camera :\n" \
-		"        nam :\n" \
-		"          \"camera\"\n" \
-		"        pos :\n" \
-		"          - 0\n" \
-		"          - 0\n" \
-		"          - 1000\n" \
-		"        prj :\n" \
-		"          Projection :\n" \
-		"            typ :\n" \
-		"              \"orthogonal\"\n" \
-		"    - \"$this\"\n" \
-		"  phy :\n" \
-		"    BulletPhysics :\n" \
-		"      null\n";
+        "Scene :\n" \
+        "  phy :\n" \
+        "    BulletPhysics :\n" \
+        "      null\n" \
+        "  chl :\n" \
+        "    - Camera :\n" \
+        "        nam :\n" \
+        "          \"camera\"\n" \
+        "        pos :\n" \
+        "          - 0\n" \
+        "          - 0\n" \
+        "          - 1000\n" \
+        "        prj :\n" \
+        "          Projection :\n" \
+        "            typ :\n" \
+        "              \"orthogonal\"\n" \
+        "    - \"$this\"\n";
     assert(paw->root().toString() == correct);
 }
 

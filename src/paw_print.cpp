@@ -192,7 +192,7 @@ const vector<int>& PawPrint::getDataIdxsOfMap (int map_idx) const {
         idx += dataSize(idx);
     }
 
-    std::sort(result.begin(), result.end(), SortFuncForKey(*this));
+    //std::sort(result.begin(), result.end(), SortFuncForKey(*this));
     
     return result;
 }
