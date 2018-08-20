@@ -82,7 +82,7 @@ template<>
 bool PawPrint::Cursor::get<bool> (bool default_value) const {
     if (is<bool>() == false)
         return default_value;
-    return paw_print_->getData<char>(idx_) != 0;
+    return paw_print_->getData<char>(idx_ + sizeof(DataType)) != 0;
 }
 
 template<>
@@ -141,8 +141,8 @@ PawPrint::Cursor PawPrint::Cursor::operator[] (const char *key) const {
     if (isMap() == false)
         return Cursor(paw_print_, -1, holder_);
 
-    auto &data_idxs = paw_print_->getDataIdxsOfMap(idx_);
-    int pair_idx = paw_print_->findRawIdxOfValue(data_idxs, 0, data_idxs.size() - 1, key);
+    auto &sorted_data_idxs = paw_print_->getSortedDataIdxsOfMap(idx_);
+    int pair_idx = paw_print_->findRawIdxOfValue(sorted_data_idxs, 0, sorted_data_idxs.size() - 1, key);
     if (pair_idx < 0)
         return Cursor(paw_print_, -1, holder_);
 

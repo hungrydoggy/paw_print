@@ -203,7 +203,8 @@ public:
     }
 
     const vector<int>& getDataIdxsOfSequence (int sequence_idx) const;
-    const vector<int>& getDataIdxsOfMap (int map_idx) const;
+    const vector<int>& getDataIdxsOfMap       (int map_idx) const;
+    const vector<int>& getSortedDataIdxsOfMap (int map_idx) const;
 
     int findRawIdxOfValue (
             const vector<int> &map_datas,
@@ -215,6 +216,7 @@ private:
     vector<unsigned char> raw_data_;
     mutable unordered_map<int, vector<int>> data_idxs_of_sequence_map_;
     mutable unordered_map<int, vector<int>> data_idxs_of_map_map_;
+	mutable unordered_map<int, vector<int>> sorted_data_idxs_of_map_map_;
     bool is_closed_;
 
     stack<int> curly_open_idx_stack_;
