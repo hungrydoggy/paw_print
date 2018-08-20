@@ -156,12 +156,12 @@ PawPrint::Cursor PawPrint::Cursor::operator[] (const string &key) const {
 
 const char* PawPrint::Cursor::getKey (int idx) const {
     if (isMap() == false)
-        return null;
+        return "";
 
     auto &data_idxs = paw_print_->getDataIdxsOfMap(idx_);
     int pair_idx = data_idxs[idx];
     if (pair_idx < 0)
-        return null;
+        return "";
 
     auto key_idx = paw_print_->getKeyRawIdxOfPair(pair_idx);
     return paw_print_->getStrValue(key_idx);
