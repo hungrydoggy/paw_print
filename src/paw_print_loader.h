@@ -18,7 +18,7 @@ using std::vector;
 class PawPrint;
 
 
-class PawPrintLoader {
+class PAW_PRINT_API PawPrintLoader {
 public:
     
     static shared_ptr<PawPrint> loadText (const char *text);

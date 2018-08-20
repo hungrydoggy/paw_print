@@ -73,7 +73,16 @@ static bool _addStringToken (
         unsigned short indent,
         unsigned short column,
         unsigned short line,
+		bool check_bool,
         vector<Token> &tokens) {
+
+	if (check_bool == true) {
+		auto str = string(text + first_idx, last_idx - first_idx + 1);
+		if (str == "true" || str == "false") {
+			tokens.push_back(Token(TokenType::BOOL, first_idx, last_idx, indent, column, line));
+			return true;
+		}
+	}
 
     tokens.push_back(Token(TokenType::STRING, first_idx, last_idx, indent, column, line));
 
@@ -92,7 +101,7 @@ static bool _addWordToken (
     if (text[first_idx] >= '0' && text[first_idx] <= '9')
         return _addNumberToken(text, first_idx, last_idx, indent, column, line, tokens);
     else
-        return _addStringToken(text, first_idx, last_idx, indent, column, line, tokens);
+        return _addStringToken(text, first_idx, last_idx, indent, column, line, true, tokens);
 }
 
 // return next idx
@@ -123,7 +132,7 @@ static int _findAndAddToken_quoted(
             default:
                 if (c == quote_char) {
                     auto is_ok = _addStringToken(
-                            text, start_idx, idx - 1, indent, column, line, tokens);
+                            text, start_idx, idx - 1, indent, column, line, false, tokens);
                     if (is_ok == false)
                         return -1;
                     return idx + 1;
