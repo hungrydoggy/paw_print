@@ -74,6 +74,7 @@ public:
     public:
         const PawPrint* paw_print () const { return paw_print_; }
 
+		Cursor ();
         Cursor (
                 const PawPrint *paw_print,
                 int idx,

@@ -13,6 +13,10 @@ using std::endl;
 using std::stringstream;
 using std::to_string;
 
+PawPrint::Cursor::Cursor ()
+:paw_print_(null),
+ idx_(-1) {
+}
 
 PawPrint::Cursor::Cursor (
         const PawPrint *paw_print, int idx, const shared_ptr<PawPrint> &holdable)

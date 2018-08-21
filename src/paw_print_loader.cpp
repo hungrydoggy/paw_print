@@ -375,6 +375,10 @@ static int _findAndAddToken (
 bool PawPrintLoader::tokenize (const char *text, vector<Token> &tokens) {
     int idx = 0;
 
+	// remove BOM
+	if (text[0] == -17 && text[1] == -69, text[2] == -65)
+		idx = 3;
+
     // trim left and indent
     unsigned short indent = 0;
     unsigned short column = 0;
@@ -462,6 +466,16 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
                                 t.column,
                                 t.line));
                     indent_stack.pop();
+
+					if (indent_stack.empty() == true) {
+						if (t.indent == 0) {
+							break;
+						}else {
+							cout << "err: indentation error on line:" << t.line
+								<< ", column:" << t.column << endl;
+							return false;
+						}
+					}
                 }
             }
         }
