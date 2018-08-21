@@ -209,11 +209,21 @@ string PawPrint::Cursor::toString (int indent, int indent_inc, bool ignore_inden
             if (size() <= 0)
                 ss << "[ ]" << endl;
 			for (int i = 0; i < size(); ++i) {
+				
 				if (i != 0) {
 					for (int i = 0; i<indent; ++i)
 						ss << " ";
 				}
-				ss << "- " << (*this)[i].toString(indent + indent_inc, indent_inc, true);
+
+				auto child = (*this)[i];
+				auto need_new_line = child.isSequence() || (child.isMap() && child.size() > 1);
+				ss << "- ";
+				if (need_new_line == true) {
+					ss << "\n";
+					for (int i = 0; i<indent + indent_inc; ++i)
+						ss << " ";
+				}
+				ss << child.toString(indent + indent_inc, indent_inc, true);
 			}
             break;
         case PawPrint::Data::TYPE_MAP:
