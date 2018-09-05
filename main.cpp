@@ -748,6 +748,32 @@ static void _t_load_chance () {
     assert(paw->root().toString() == correct);
 }
 
+static void _t_load_settings () {
+    cout << "load settings.app" << endl;
+#if _WINDOWS
+    auto paw = _loadPaw("../../paw/settings.app");
+#else
+    auto paw = _loadPaw("../paw/settings.app");
+#endif
+    assert(paw != null);
+
+    auto correct =
+		"App :\n" \
+		"  nam :\n" \
+		"    \"test_proj\"\n" \
+		"  prj :\n" \
+		"    \"TestProject\"\n" \
+		"  wid :\n" \
+		"    432\n" \
+		"  hei :\n" \
+		"    768\n" \
+		"  szf :\n" \
+		"    android :\n" \
+		"      - 1024\n" \
+		"      - 1920\n";
+    assert(paw->root().toString() == correct);
+}
+
 int main () {
     _t_basic();
     _t_loadParsingTree();
@@ -757,5 +783,6 @@ int main () {
 	_t_load_obj_shell();
 	_t_load_dialogue();
 	_t_load_chance();
+	_t_load_settings();
     return 0;
 }
