@@ -247,7 +247,7 @@ string PawPrint::Cursor::toString (int indent, int indent_inc, bool ignore_inden
 						ss << " ";
 				}
                 ss << getKeyOfPair(i) << " :" << endl;
-                ss << (*this)[i].toString(indent + indent_inc, indent_inc);
+                ss << getValueOfPair(i).toString(indent + indent_inc, indent_inc);
             }
             break;
         default:
