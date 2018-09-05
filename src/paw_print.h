@@ -40,6 +40,7 @@ public:
         SQUARE_CLOSE,
         CURLY_OPEN,
         CURLY_CLOSE,
+        NEW_LINE,
     };
 };
 

@@ -1,0 +1,103 @@
+Sequence:
+    ref:
+        'dst_pos':
+            '!pos_from':
+                roo: '..'
+                tar: '/camera'
+                pos: [0, 0, -300]
+    chl:
+        - SaveInitialInfo:
+        - SaveInitialInfo:
+            tar: 'back_top_text'
+        
+        - SetInputProcessable: false
+        
+        - SetDrawByTreeOrder: true
+        - SetDrawSortGroup: 20001
+        - RemoveAction:
+            nam: 'blink_back_top_text'
+        - RemoveAction:
+            nam: 'blink_front_top_text'
+        - SetDrawable:
+            tar: 'front_top_text'
+            val: false
+        - MoveZTo:
+            dur: 0
+            val:
+                '!list_get':
+                    val: '$dst_pos'
+                    idx: 2
+        - SetDrawable:
+            val: true
+        - Parallel:
+            - MoveTo:
+                dur: 0.5
+                val: '$dst_pos'
+                int: 'InOutQuad'
+            - RotateTo:
+                dur: 0.5
+                val: [0, 180, 0]
+                int: 'InOutQuad'
+            - ScaleTo:
+                dur: 0.5
+                val: [0.6, 0.6, 1]
+                int: 'InOutQuad'
+            - Sequence:
+                - Wait: 0.2
+                - SendMessage:
+                    dst: '/'
+                    nam: 'showPopupBG'
+        
+        - AddAction:
+            nam: 'blink_back_top_text'
+            thr: true
+        - SetInputProcessable: true
+        - Pause:
+            tar: '/'
+            nam: 'openChanceCard'
+        - SetInputProcessable: false
+        
+        - SetDrawable:
+            tar: 'back_top_text'
+            val: false
+        
+        - Parallel:
+            - Sequence:
+                - RotateTo:
+                    dur: 0.2
+                    val: [0, 90, 0]
+                    int: 'InQuad'
+                - RotateTo:
+                    dur: 0.2
+                    val: [0, 0, 0]
+                    int: 'OutQuad'
+            - ScaleTo:
+                dur: 0.4
+                val: [1, 1, 1]
+                int: 'InOutQuad'
+        
+        - Wait: 0.1
+        - SetInputProcessable: true
+        - Pause:
+            tar: '/'
+            nam: 'closeChanceCard'
+        - SetInputProcessable: false
+        - SendMessage:
+            dst: '/'
+            nam: 'hidePopupBG'
+        
+        - '$close_action'
+            
+        - LoadInitialInfo:
+        - LoadInitialInfo:
+            tar: 'back_top_text'
+        
+        - SetInputProcessable:
+            '$input_processable_on_end': true
+        
+        - SendMessage:
+            dst: '/'
+            nam: 'endOfChanceCard'
+    
+    
+    

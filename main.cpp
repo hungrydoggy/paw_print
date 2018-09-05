@@ -238,6 +238,7 @@ void _t_load_map_paws() {
 #endif
 		assert(paw != null);
 
+        cout << paw->root().toString() << endl;
         assert(paw->root().toString() == correct[pi]);
 	}
 }
@@ -265,87 +266,118 @@ static void _t_loadParsingTree () {
     auto table = ParsingTable(binary);
     //cout << table.toString();
     auto table_correct = 
-		"##### Rules\n" \
-		"# Rule 0 : S' -> S \n" \
-		"# Rule 1 : S -> NODE \n" \
-		"# Rule 2 : KEY -> bool \n" \
-		"# Rule 3 : KEY -> int \n" \
-		"# Rule 4 : KEY -> double \n" \
-		"# Rule 5 : KEY -> string \n" \
-		"# Rule 6 : KV -> KEY colon #indent NODE #dedent \n" \
-		"# Rule 7 : KV -> KEY colon NODE \n" \
-		"# Rule 8 : KV -> KEY colon #indent #dedent \n" \
-		"# Rule 9 : KV -> KEY colon \n" \
-		"# Rule 10 : MAP -> curly_open curly_close \n" \
-		"# Rule 11 : MAP -> curly_open MAP_BLOCKED curly_close \n" \
-		"# Rule 12 : MAP -> KV MAP \n" \
-		"# Rule 13 : MAP -> KV \n" \
-		"# Rule 14 : KV_BLOCKED -> KEY colon NODE \n" \
-		"# Rule 15 : MAP_BLOCKED -> KV_BLOCKED \n" \
-		"# Rule 16 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED \n" \
-		"# Rule 17 : SEQ_ELEM -> dash NODE \n" \
-		"# Rule 18 : SEQ_ELEM -> dash #indent NODE #dedent \n" \
-		"# Rule 19 : SEQUENCE -> square_open square_close \n" \
-		"# Rule 20 : SEQUENCE -> square_open SEQ_BLOCKED square_close \n" \
-		"# Rule 21 : SEQUENCE -> SEQ_ELEM SEQUENCE \n" \
-		"# Rule 22 : SEQUENCE -> SEQ_ELEM \n" \
-		"# Rule 23 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED \n" \
-		"# Rule 24 : SEQ_BLOCKED -> NODE \n" \
-		"# Rule 25 : NODE -> bool \n" \
-		"# Rule 26 : NODE -> int \n" \
-		"# Rule 27 : NODE -> double \n" \
-		"# Rule 28 : NODE -> string \n" \
-		"# Rule 29 : NODE -> MAP \n" \
-		"# Rule 30 : NODE -> SEQUENCE \n" \
-		"##### Table\n" \
-		"    |   $ | #dedent | #indent | bool | colon | comma | curly_close | curly_open | dash | double | int | square_close | square_open | string |  KEY |  KV | KV_BLOCKED |  MAP | MAP_BLOCKED | NODE |    S | SEQUENCE | SEQ_BLOCKED | SEQ_ELEM | \n" \
-		"-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n" \
-		"  0 |     |         |         |   s1 |       |       |             |         s6 |   s5 |     s3 |  s2 |              |          s7 |     s4 |  go8 | go9 |            | go10 |             | go13 | go14 |     go12 |             |     go11 | \n" \
-		"  1 | r25 |     r25 |         |  r25 |    r2 |   r25 |         r25 |        r25 |  r25 |    r25 | r25 |          r25 |         r25 |    r25 |      |     |            |      |             |      |      |          |             |          | \n" \
-		"  2 | r26 |     r26 |         |  r26 |    r3 |   r26 |         r26 |        r26 |  r26 |    r26 | r26 |          r26 |         r26 |    r26 |      |     |            |      |             |      |      |          |             |          | \n" \
-		"  3 | r27 |     r27 |         |  r27 |    r4 |   r27 |         r27 |        r27 |  r27 |    r27 | r27 |          r27 |         r27 |    r27 |      |     |            |      |             |      |      |          |             |          | \n" \
-		"  4 | r28 |     r28 |         |  r28 |    r5 |   r28 |         r28 |        r28 |  r28 |    r28 | r28 |          r28 |         r28 |    r28 |      |     |            |      |             |      |      |          |             |          | \n" \
-		"  5 |     |         |     s15 |   s1 |       |       |             |         s6 |   s5 |     s3 |  s2 |              |          s7 |     s4 |  go8 | go9 |            | go10 |             | go16 |      |     go12 |             |     go11 | \n" \
-		"  6 |     |         |         |  s17 |       |       |         s21 |            |      |    s19 | s18 |              |             |    s20 | go22 |     |       go23 |      |        go24 |      |      |          |             |          | \n" \
-		"  7 |     |         |         |   s1 |       |       |             |         s6 |   s5 |     s3 |  s2 |          s25 |          s7 |     s4 |  go8 | go9 |            | go10 |             | go27 |      |     go12 |        go26 |     go11 | \n" \
-		"  8 |     |         |         |      |   s28 |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		"  9 | r13 |     r13 |         |  s17 |       |   r13 |         r13 |         s6 |  r13 |    s19 | s18 |          r13 |         r13 |    s20 |  go8 | go9 |            | go29 |             |      |      |          |             |          | \n" \
-		" 10 | r29 |     r29 |         |  r29 |       |   r29 |         r29 |        r29 |  r29 |    r29 | r29 |          r29 |         r29 |    r29 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 11 | r22 |     r22 |         |  r22 |       |   r22 |         r22 |        r22 |   s5 |    r22 | r22 |          r22 |          s7 |    r22 |      |     |            |      |             |      |      |     go30 |             |     go11 | \n" \
-		" 12 | r30 |     r30 |         |  r30 |       |   r30 |         r30 |        r30 |  r30 |    r30 | r30 |          r30 |         r30 |    r30 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 13 |  r1 |         |         |      |       |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 14 | acc |         |         |      |       |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 15 |     |         |         |   s1 |       |       |             |         s6 |   s5 |     s3 |  s2 |              |          s7 |     s4 |  go8 | go9 |            | go10 |             | go31 |      |     go12 |             |     go11 | \n" \
-		" 16 | r17 |     r17 |         |  r17 |       |   r17 |         r17 |        r17 |  r17 |    r17 | r17 |          r17 |         r17 |    r17 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 17 |     |         |         |      |    r2 |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 18 |     |         |         |      |    r3 |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 19 |     |         |         |      |    r4 |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 20 |     |         |         |      |    r5 |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 21 | r10 |     r10 |         |  r10 |       |   r10 |         r10 |        r10 |  r10 |    r10 | r10 |          r10 |         r10 |    r10 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 22 |     |         |         |      |   s32 |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 23 |     |         |         |      |       |   s33 |         r15 |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 24 |     |         |         |      |       |       |         s34 |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 25 | r19 |     r19 |         |  r19 |       |   r19 |         r19 |        r19 |  r19 |    r19 | r19 |          r19 |         r19 |    r19 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 26 |     |         |         |      |       |       |             |            |      |        |     |          s35 |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 27 |     |         |         |      |       |   s36 |             |            |      |        |     |          r24 |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 28 |  r9 |      r9 |     s37 |   s1 |       |    r9 |          r9 |         s6 |   s5 |     s3 |  s2 |           r9 |          s7 |     s4 |  go8 | go9 |            | go10 |             | go38 |      |     go12 |             |     go11 | \n" \
-		" 29 | r12 |     r12 |         |  r12 |       |   r12 |         r12 |        r12 |  r12 |    r12 | r12 |          r12 |         r12 |    r12 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 30 | r21 |     r21 |         |  r21 |       |   r21 |         r21 |        r21 |  r21 |    r21 | r21 |          r21 |         r21 |    r21 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 31 |     |     s39 |         |      |       |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 32 |     |         |         |   s1 |       |       |             |         s6 |   s5 |     s3 |  s2 |              |          s7 |     s4 |  go8 | go9 |            | go10 |             | go40 |      |     go12 |             |     go11 | \n" \
-		" 33 |     |         |         |  s17 |       |       |             |            |      |    s19 | s18 |              |             |    s20 | go22 |     |       go23 |      |        go41 |      |      |          |             |          | \n" \
-		" 34 | r11 |     r11 |         |  r11 |       |   r11 |         r11 |        r11 |  r11 |    r11 | r11 |          r11 |         r11 |    r11 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 35 | r20 |     r20 |         |  r20 |       |   r20 |         r20 |        r20 |  r20 |    r20 | r20 |          r20 |         r20 |    r20 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 36 |     |         |         |   s1 |       |       |             |         s6 |   s5 |     s3 |  s2 |              |          s7 |     s4 |  go8 | go9 |            | go10 |             | go27 |      |     go12 |        go42 |     go11 | \n" \
-		" 37 |     |     s43 |         |   s1 |       |       |             |         s6 |   s5 |     s3 |  s2 |              |          s7 |     s4 |  go8 | go9 |            | go10 |             | go44 |      |     go12 |             |     go11 | \n" \
-		" 38 |  r7 |      r7 |         |   r7 |       |    r7 |          r7 |         r7 |   r7 |     r7 |  r7 |           r7 |          r7 |     r7 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 39 | r18 |     r18 |         |  r18 |       |   r18 |         r18 |        r18 |  r18 |    r18 | r18 |          r18 |         r18 |    r18 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 40 |     |         |         |      |       |   r14 |         r14 |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 41 |     |         |         |      |       |       |         r16 |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 42 |     |         |         |      |       |       |             |            |      |        |     |          r23 |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 43 |  r8 |      r8 |         |   r8 |       |    r8 |          r8 |         r8 |   r8 |     r8 |  r8 |           r8 |          r8 |     r8 |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 44 |     |     s45 |         |      |       |       |             |            |      |        |     |              |             |        |      |     |            |      |             |      |      |          |             |          | \n" \
-		" 45 |  r6 |      r6 |         |   r6 |       |    r6 |          r6 |         r6 |   r6 |     r6 |  r6 |           r6 |          r6 |     r6 |      |     |            |      |             |      |      |          |             |          | \n";
+        "##### Rules\n" \
+        "# Rule 0 : S' -> S \n" \
+        "# Rule 1 : S -> NODE \n" \
+        "# Rule 2 : KEY -> bool \n" \
+        "# Rule 3 : KEY -> int \n" \
+        "# Rule 4 : KEY -> double \n" \
+        "# Rule 5 : KEY -> string \n" \
+        "# Rule 6 : KV -> KEY colon NODE #new_line \n" \
+        "# Rule 7 : KV -> KEY colon #new_line #indent NODE #new_line #dedent \n" \
+        "# Rule 8 : KV -> KEY colon #new_line \n" \
+        "# Rule 9 : MAP -> KV MAP \n" \
+        "# Rule 10 : MAP -> KV \n" \
+        "# Rule 11 : CURL_MAP -> curly_open curly_close \n" \
+        "# Rule 12 : CURL_MAP -> curly_open #new_line curly_close \n" \
+        "# Rule 13 : CURL_MAP -> curly_open MAP_BLOCKED curly_close \n" \
+        "# Rule 14 : CURL_MAP -> curly_open #new_line #indent MAP_BLOCKED #dedent curly_close \n" \
+        "# Rule 15 : KV_BLOCKED -> KEY colon NODE \n" \
+        "# Rule 16 : KV_BLOCKED -> KEY colon \n" \
+        "# Rule 17 : MAP_BLOCKED -> KV_BLOCKED \n" \
+        "# Rule 18 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED \n" \
+        "# Rule 19 : MAP_BLOCKED -> KV_BLOCKED comma #new_line MAP_BLOCKED \n" \
+        "# Rule 20 : SEQ_ELEM -> dash NODE \n" \
+        "# Rule 21 : SEQ_ELEM -> dash #new_line #indent NODE #new_line #dedent \n" \
+        "# Rule 22 : SEQUENCE -> SEQ_ELEM SEQUENCE \n" \
+        "# Rule 23 : SEQUENCE -> SEQ_ELEM \n" \
+        "# Rule 24 : SQUARE_SEQ -> square_open square_close \n" \
+        "# Rule 25 : SQUARE_SEQ -> square_open SEQ_BLOCKED square_close \n" \
+        "# Rule 26 : SQUARE_SEQ -> square_open #new_line square_close \n" \
+        "# Rule 27 : SQUARE_SEQ -> square_open #new_line #indent SEQ_BLOCKED #dedent #new_line square_close \n" \
+        "# Rule 28 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED \n" \
+        "# Rule 29 : SEQ_BLOCKED -> NODE comma #new_line SEQ_BLOCKED \n" \
+        "# Rule 30 : SEQ_BLOCKED -> NODE \n" \
+        "# Rule 31 : NODE -> bool \n" \
+        "# Rule 32 : NODE -> int \n" \
+        "# Rule 33 : NODE -> double \n" \
+        "# Rule 34 : NODE -> string \n" \
+        "# Rule 35 : NODE -> MAP \n" \
+        "# Rule 36 : NODE -> CURL_MAP \n" \
+        "# Rule 37 : NODE -> SEQUENCE \n" \
+        "# Rule 38 : NODE -> SQUARE_SEQ \n" \
+        "##### Table\n" \
+        "    |   $ | #dedent | #indent | #new_line | bool | colon | comma | curly_close | curly_open | dash | double | int | square_close | square_open | string | CURL_MAP |  KEY |  KV | KV_BLOCKED |  MAP | MAP_BLOCKED | NODE |    S | SEQUENCE | SEQ_BLOCKED | SEQ_ELEM | SQUARE_SEQ | \n" \
+        "-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n" \
+        "  0 |     |         |         |           |   s5 |       |       |             |        s14 |  s13 |     s3 |  s4 |              |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go16 | go10 |     go12 |             |     go11 |        go7 | \n" \
+        "  1 |     |         |         |           |      |   s17 |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        "  2 | r10 |     r10 |         |       r10 |  s20 |       |   r10 |         r10 |            |  r10 |    s18 | s19 |          r10 |             |    s21 |          |  go1 | go2 |            | go22 |             |      |      |          |             |          |            | \n" \
+        "  3 | r33 |     r33 |         |       r33 |      |    r4 |   r33 |         r33 |            |  r33 |        |     |          r33 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        "  4 | r32 |     r32 |         |       r32 |      |    r3 |   r32 |         r32 |            |  r32 |        |     |          r32 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        "  5 | r31 |     r31 |         |       r31 |      |    r2 |   r31 |         r31 |            |  r31 |        |     |          r31 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        "  6 | r34 |     r34 |         |       r34 |      |    r5 |   r34 |         r34 |            |  r34 |        |     |          r34 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        "  7 | r38 |     r38 |         |       r38 |      |       |   r38 |         r38 |            |  r38 |        |     |          r38 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        "  8 | r35 |     r35 |         |       r35 |      |       |   r35 |         r35 |            |  r35 |        |     |          r35 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        "  9 |     |         |         |       s24 |   s5 |       |       |             |        s14 |  s13 |     s3 |  s4 |          s23 |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go26 |      |     go12 |        go25 |     go11 |        go7 | \n" \
+        " 10 | acc |         |         |           |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 11 | r23 |     r23 |         |       r23 |      |       |   r23 |         r23 |            |  s13 |        |     |          r23 |             |        |          |      |     |            |      |             |      |      |     go27 |             |     go11 |            | \n" \
+        " 12 | r37 |     r37 |         |       r37 |      |       |   r37 |         r37 |            |  r37 |        |     |          r37 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 13 |     |         |         |       s28 |   s5 |       |       |             |        s14 |  s13 |     s3 |  s4 |              |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go29 |      |     go12 |             |     go11 |        go7 | \n" \
+        " 14 |     |         |         |       s31 |  s20 |       |       |         s33 |            |      |    s18 | s19 |              |             |    s21 |          | go30 |     |       go34 |      |        go32 |      |      |          |             |          |            | \n" \
+        " 15 | r36 |     r36 |         |       r36 |      |       |   r36 |         r36 |            |  r36 |        |     |          r36 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 16 |  r1 |         |         |           |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 17 |     |         |         |       s35 |   s5 |       |       |             |        s14 |  s13 |     s3 |  s4 |              |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go36 |      |     go12 |             |     go11 |        go7 | \n" \
+        " 18 |     |         |         |           |      |    r4 |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 19 |     |         |         |           |      |    r3 |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 20 |     |         |         |           |      |    r2 |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 21 |     |         |         |           |      |    r5 |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 22 |  r9 |      r9 |         |        r9 |      |       |    r9 |          r9 |            |   r9 |        |     |           r9 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 23 | r24 |     r24 |         |       r24 |      |       |   r24 |         r24 |            |  r24 |        |     |          r24 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 24 |     |         |     s38 |           |      |       |       |             |            |      |        |     |          s37 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 25 |     |         |         |           |      |       |       |             |            |      |        |     |          s39 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 26 |     |     r30 |         |           |      |       |   s40 |             |            |      |        |     |          r30 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 27 | r22 |     r22 |         |       r22 |      |       |   r22 |         r22 |            |  r22 |        |     |          r22 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 28 |     |         |     s41 |           |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 29 | r20 |     r20 |         |       r20 |      |       |   r20 |         r20 |            |  r20 |        |     |          r20 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 30 |     |         |         |           |      |   s42 |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 31 |     |         |     s43 |           |      |       |       |         s44 |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 32 |     |         |         |           |      |       |       |         s45 |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 33 | r11 |     r11 |         |       r11 |      |       |   r11 |         r11 |            |  r11 |        |     |          r11 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 34 |     |     r17 |         |           |      |       |   s46 |         r17 |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 35 |  r8 |      r8 |     s47 |        r8 |   r8 |       |    r8 |          r8 |            |   r8 |     r8 |  r8 |           r8 |             |     r8 |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 36 |     |         |         |       s48 |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 37 | r26 |     r26 |         |       r26 |      |       |   r26 |         r26 |            |  r26 |        |     |          r26 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 38 |     |         |         |           |   s5 |       |       |             |        s14 |  s13 |     s3 |  s4 |              |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go26 |      |     go12 |        go49 |     go11 |        go7 | \n" \
+        " 39 | r25 |     r25 |         |       r25 |      |       |   r25 |         r25 |            |  r25 |        |     |          r25 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 40 |     |         |         |       s50 |   s5 |       |       |             |        s14 |  s13 |     s3 |  s4 |              |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go26 |      |     go12 |        go51 |     go11 |        go7 | \n" \
+        " 41 |     |         |         |           |   s5 |       |       |             |        s14 |  s13 |     s3 |  s4 |              |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go52 |      |     go12 |             |     go11 |        go7 | \n" \
+        " 42 |     |     r16 |         |           |   s5 |       |   r16 |         r16 |        s14 |  s13 |     s3 |  s4 |              |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go53 |      |     go12 |             |     go11 |        go7 | \n" \
+        " 43 |     |         |         |           |  s20 |       |       |             |            |      |    s18 | s19 |              |             |    s21 |          | go30 |     |       go34 |      |        go54 |      |      |          |             |          |            | \n" \
+        " 44 | r12 |     r12 |         |       r12 |      |       |   r12 |         r12 |            |  r12 |        |     |          r12 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 45 | r13 |     r13 |         |       r13 |      |       |   r13 |         r13 |            |  r13 |        |     |          r13 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 46 |     |         |         |       s55 |  s20 |       |       |             |            |      |    s18 | s19 |              |             |    s21 |          | go30 |     |       go34 |      |        go56 |      |      |          |             |          |            | \n" \
+        " 47 |     |         |         |           |   s5 |       |       |             |        s14 |  s13 |     s3 |  s4 |              |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go57 |      |     go12 |             |     go11 |        go7 | \n" \
+        " 48 |  r6 |      r6 |         |        r6 |   r6 |       |    r6 |          r6 |            |   r6 |     r6 |  r6 |           r6 |             |     r6 |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 49 |     |     s58 |         |           |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 50 |     |         |         |           |   s5 |       |       |             |        s14 |  s13 |     s3 |  s4 |              |          s9 |     s6 |     go15 |  go1 | go2 |            |  go8 |             | go26 |      |     go12 |        go59 |     go11 |        go7 | \n" \
+        " 51 |     |     r28 |         |           |      |       |       |             |            |      |        |     |          r28 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 52 |     |         |         |       s60 |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 53 |     |     r15 |         |           |      |       |   r15 |         r15 |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 54 |     |     s61 |         |           |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 55 |     |         |         |           |  s20 |       |       |             |            |      |    s18 | s19 |              |             |    s21 |          | go30 |     |       go34 |      |        go62 |      |      |          |             |          |            | \n" \
+        " 56 |     |     r18 |         |           |      |       |       |         r18 |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 57 |     |         |         |       s63 |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 58 |     |         |         |       s64 |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 59 |     |     r29 |         |           |      |       |       |             |            |      |        |     |          r29 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 60 |     |     s65 |         |           |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 61 |     |         |         |           |      |       |       |         s66 |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 62 |     |     r19 |         |           |      |       |       |         r19 |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 63 |     |     s67 |         |           |      |       |       |             |            |      |        |     |              |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 64 |     |         |         |           |      |       |       |             |            |      |        |     |          s68 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 65 | r21 |     r21 |         |       r21 |      |       |   r21 |         r21 |            |  r21 |        |     |          r21 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 66 | r14 |     r14 |         |       r14 |      |       |   r14 |         r14 |            |  r14 |        |     |          r14 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 67 |  r7 |      r7 |         |        r7 |   r7 |       |    r7 |          r7 |            |   r7 |     r7 |  r7 |           r7 |             |     r7 |          |      |     |            |      |             |      |      |          |             |          |            | \n" \
+        " 68 | r27 |     r27 |         |       r27 |      |       |   r27 |         r27 |            |  r27 |        |     |          r27 |             |        |          |      |     |            |      |             |      |      |          |             |          |            | \n";
     assert(table.toString() == table_correct);
 
 }
@@ -536,6 +568,38 @@ static void _t_load_dialogue () {
     //cout << paw->root().toString();
 }
 
+static void _t_load_chance () {
+    cout << "load chance.shell" << endl;
+#if _WINDOWS
+    auto paw = _loadPaw("../../paw/chance.shell");
+#else
+    auto paw = _loadPaw("../paw/chance.shell");
+#endif
+    assert(paw != null);
+
+    cout << paw->root().toString() << endl;
+
+    auto correct =
+        "Scene :\n" \
+        "  phy :\n" \
+        "    BulletPhysics :\n" \
+        "      null\n" \
+        "  chl :\n" \
+        "    - Camera :\n" \
+        "        nam :\n" \
+        "          \"camera\"\n" \
+        "        pos :\n" \
+        "          - 0\n" \
+        "          - 0\n" \
+        "          - 1000\n" \
+        "        prj :\n" \
+        "          Projection :\n" \
+        "            typ :\n" \
+        "              \"orthogonal\"\n" \
+        "    - \"$this\"\n";
+    assert(paw->root().toString() == correct);
+}
+
 int main () {
     _t_basic();
     _t_loadParsingTree();
@@ -544,5 +608,6 @@ int main () {
 	_t_load_green();
 	_t_load_obj_shell();
 	_t_load_dialogue();
+	_t_load_chance();
     return 0;
 }

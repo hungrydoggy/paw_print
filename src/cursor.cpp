@@ -199,6 +199,9 @@ string PawPrint::Cursor::toString (int indent, int indent_inc, bool ignore_inden
     }
 
     switch (type()) {
+        case PawPrint::Data::TYPE_NONE:
+            ss << "NONE" << endl;
+            break;
         case PawPrint::Data::TYPE_NULL:
             ss << "null" << endl;
             break;
@@ -250,7 +253,7 @@ string PawPrint::Cursor::toString (int indent, int indent_inc, bool ignore_inden
         default:
             // TODO err
             cout << "err: cannot cursor convert to string type \'"
-                    << type() << "\'" << endl;
+                    << to_string(type()) << "\'" << endl;
             return "";
     }
 

@@ -242,6 +242,16 @@ static int _findAndAddToken (
                             text, first_idx, idx - 1, indent, column, line, tokens);
 					if (is_ok == false)
 						return -1;
+
+                    tokens.push_back(
+                            Token(
+                                TokenType::NEW_LINE,
+                                idx,
+                                idx,
+                                indent,
+                                column,
+                                line));
+
 				}
                 return idx;
             }
@@ -267,8 +277,6 @@ static int _findAndAddToken (
                 }
 
                 tokens.push_back(Token(TokenType::COLON, idx, idx, indent, column, line));
-
-                indent += 4;
 
                 return idx + 1;
             }
@@ -381,8 +389,8 @@ bool PawPrintLoader::tokenize (const char *text, vector<Token> &tokens) {
 
     // trim left and indent
     unsigned short indent = 0;
-    unsigned short column = 0;
-    unsigned short line = 0;
+    unsigned short column = 1;
+    unsigned short line = 1;
     for (; true; ++idx, ++column) {
         const char c = text[idx];
         if (c == 0) {
@@ -443,7 +451,8 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
         }
 
         // insert indent/dedent
-        if (block_stack.empty() == true && pre_t_idx >= 0) {
+        //if (block_stack.empty() == true && pre_t_idx >= 0) {
+        if (pre_t_idx >= 0) {
 			auto &pre_t = tokens[pre_t_idx];
             if (t.indent > pre_t.indent) {
                 indented.push_back(
@@ -499,6 +508,17 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
     }
 
     auto &last_t = tokens[tokens.size() - 1];
+    if (last_t.type != TokenType::NEW_LINE) {
+        indented.push_back(
+                Token(
+                    TokenType::NEW_LINE,
+                    last_t.first_idx,
+                    last_t.last_idx,
+                    last_t.indent,
+                    last_t.column,
+                    last_t.line));
+    }
+
     while (indent_stack.empty() == false) {
         indented.push_back(
                 Token(
@@ -566,6 +586,7 @@ void PawPrintLoader::_initParsingTable () {
             case TokenType::SQUARE_CLOSE: ss << "SQUARE_CLOSE, "; break;
             case TokenType::CURLY_OPEN  : ss << "CURLY_OPEN, "  ; break;
             case TokenType::CURLY_CLOSE : ss << "CURLY_CLOSE, " ; break;
+            case TokenType::NEW_LINE    : ss << "NEW_LINE, "    ; break;
         }
 
         auto size = t->last_idx - t->first_idx + 2;
@@ -630,7 +651,8 @@ static void _initLoaders () {
     if (loader_funcs.size() > 0)
         return;
 
-    // Rule 0 : S' -> S 
+
+    //# Rule 0 : S' -> S 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -640,7 +662,7 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    // Rule 1 : S -> NODE 
+    //# Rule 1 : S -> NODE 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -650,7 +672,7 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    // Rule 2 : KEY -> bool 
+    //# Rule 2 : KEY -> bool 
     auto key_func = [](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -667,16 +689,16 @@ static void _initLoaders () {
     };
     loader_funcs.push_back(key_func);
 
-    // Rule 3 : KEY -> int 
+    //# Rule 3 : KEY -> int 
     loader_funcs.push_back(key_func);
 
-    // Rule 4 : KEY -> double 
+    //# Rule 4 : KEY -> double 
     loader_funcs.push_back(key_func);
 
-    // Rule 5 : KEY -> string 
+    //# Rule 5 : KEY -> string 
     loader_funcs.push_back(key_func);
 
-    // Rule 6 : KV -> KEY colon #indent NODE #dedent 
+    //# Rule 6 : KV -> KEY colon NODE #new_line 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -684,141 +706,177 @@ static void _initLoaders () {
 
         auto &children = node->children();
 
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[2]);
+    });
+
+    //# Rule 7 : KV -> KEY colon #new_line #indent NODE #new_line #dedent 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[4]);
+    });
+
+    //# Rule 8 : KV -> KEY colon #new_line 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+
+        _parseNode(text, paw, children[0]);
+        paw->pushNull();
+    });
+
+    //# Rule 9 : MAP -> KV MAP 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 9;
+
+        if (need_wrap == true)
+            paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[1]);
+
+        if (need_wrap == true)
+            paw->endMap();
+    });
+
+
+    //# Rule 10 : MAP -> KV 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 9;
+
+        if (need_wrap == true)
+            paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+
+        if (need_wrap == true)
+            paw->endMap();
+    });
+
+    //# Rule 11 : CURL_MAP -> curly_open curly_close 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        paw->beginMap();
+        paw->endMap();
+    });
+
+    //# Rule 12 : CURL_MAP -> curly_open #new_line curly_close 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        paw->beginMap();
+        paw->endMap();
+    });
+
+    //# Rule 13 : CURL_MAP -> curly_open MAP_BLOCKED curly_close 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[1]);
+
+        paw->endMap();
+    });
+
+    //# Rule 14 : CURL_MAP -> curly_open #new_line #indent MAP_BLOCKED #dedent curly_close 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        paw->beginMap();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[3]);
+
+        paw->endMap();
+    });
+    
+    //# Rule 15 : KV_BLOCKED -> KEY colon NODE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[2]);
+    });
+
+    //# Rule 16 : KV_BLOCKED -> KEY colon 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+
+        _parseNode(text, paw, children[0]);
+        paw->pushNull();
+    });
+
+    //# Rule 17 : MAP_BLOCKED -> KV_BLOCKED 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+    });
+
+    //# Rule 18 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[2]);
+    });
+
+    //# Rule 19 : MAP_BLOCKED -> KV_BLOCKED comma #new_line MAP_BLOCKED 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
         _parseNode(text, paw, children[0]);
         _parseNode(text, paw, children[3]);
     });
 
-    // Rule 7 : KV -> KEY colon NODE 
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        auto &children = node->children();
-
-        _parseNode(text, paw, children[0]);
-        _parseNode(text, paw, children[2]);
-    });
-
-    // Rule 8 : KV -> KEY colon #indent #dedent 
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        auto &children = node->children();
-
-        _parseNode(text, paw, children[0]);
-        paw->pushNull();
-    });
-
-    // Rule 9 : KV -> KEY colon
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        auto &children = node->children();
-
-        _parseNode(text, paw, children[0]);
-        paw->pushNull();
-    });
-
-    // Rule 10 : MAP -> curly_open curly_close 
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        paw->beginMap();
-        paw->endMap();
-    });
-
-    // Rule 11 : MAP -> curly_open MAP_BLOCKED curly_close 
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        paw->beginMap();
-
-        auto &children = node->children();
-        _parseNode(text, paw, children[1]);
-
-        paw->endMap();
-    });
-
-    // Rule 12 : MAP -> KV MAP 
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 12;
-
-        if (need_wrap == true)
-            paw->beginMap();
-
-        auto &children = node->children();
-        _parseNode(text, paw, children[0]);
-        _parseNode(text, paw, children[1]);
-
-        if (need_wrap == true)
-            paw->endMap();
-    });
-
-    // Rule 13 : MAP -> KV 
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 12;
-
-        if (need_wrap == true)
-            paw->beginMap();
-
-        auto &children = node->children();
-        _parseNode(text, paw, children[0]);
-
-        if (need_wrap == true)
-            paw->endMap();
-    });
-
-    // Rule 14 : KV_BLOCKED -> string colon NODE 
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        auto &children = node->children();
-
-        _parseNode(text, paw, children[0]);
-        _parseNode(text, paw, children[2]);
-    });
-
-    // Rule 15 : MAP_BLOCKED -> KV_BLOCKED 
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        auto &children = node->children();
-        _parseNode(text, paw, children[0]);
-    });
-
-    // Rule 16 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED 
-    loader_funcs.push_back([](
-            const char *text,
-            const shared_ptr<PawPrint> &paw,
-            const shared_ptr<Node> &node){
-
-        auto &children = node->children();
-        _parseNode(text, paw, children[0]);
-        _parseNode(text, paw, children[2]);
-    });
-
-	// Rule 17 : SEQ_ELEM -> dash NODE 
+    //# Rule 20 : SEQ_ELEM -> dash NODE 
 	loader_funcs.push_back([](
 		const char *text,
 		const shared_ptr<PawPrint> &paw,
@@ -828,17 +886,54 @@ static void _initLoaders () {
 		_parseNode(text, paw, children[1]);
 	});
 
-	// Rule 18 : SEQ_ELEM -> dash #indent NODE #dedent
+    //# Rule 21 : SEQ_ELEM -> dash #new_line #indent NODE #new_line #dedent 
 	loader_funcs.push_back([](
 		const char *text,
 		const shared_ptr<PawPrint> &paw,
 		const shared_ptr<Node> &node) {
 
 		auto &children = node->children();
-		_parseNode(text, paw, children[2]);
+		_parseNode(text, paw, children[3]);
 	});
 
-    // Rule 19 : SEQUENCE -> square_open square_close 
+    //# Rule 22 : SEQUENCE -> SEQ_ELEM SEQUENCE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 22;
+
+        if (need_wrap == true)
+            paw->beginSequence();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[1]);
+
+        if (need_wrap == true)
+            paw->endSequence();
+    });
+
+    //# Rule 23 : SEQUENCE -> SEQ_ELEM 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 22;
+
+        if (need_wrap == true)
+            paw->beginSequence();
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+
+        if (need_wrap == true)
+            paw->endSequence();
+    });
+
+    //# Rule 24 : SQUARE_SEQ -> square_open square_close 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -848,7 +943,7 @@ static void _initLoaders () {
         paw->endSequence();
     });
 
-    // Rule 20 : SEQUENCE -> square_open SEQ_BLOCKED square_close 
+    //# Rule 25 : SQUARE_SEQ -> square_open SEQ_BLOCKED square_close 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -862,44 +957,31 @@ static void _initLoaders () {
         paw->endSequence();
     });
 
-    // Rule 21 : SEQUENCE -> SEQ_ELEM SEQUENCE 
+    //# Rule 26 : SQUARE_SEQ -> square_open #new_line square_close 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 21;
-
-        if (need_wrap == true)
-            paw->beginSequence();
-
-        auto &children = node->children();
-        _parseNode(text, paw, children[0]);
-        _parseNode(text, paw, children[1]);
-
-        if (need_wrap == true)
-            paw->endSequence();
+        paw->beginSequence();
+        paw->endSequence();
     });
 
-    // Rule 22 : SEQUENCE -> SEQ_ELEM 
+    //# Rule 27 : SQUARE_SEQ -> square_open #new_line #indent SEQ_BLOCKED #dedent #new_line square_close 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
             const shared_ptr<Node> &node){
 
-        auto need_wrap = node->parent() == null || node->parent()->reduced_rule_idx() != 21;
-
-        if (need_wrap == true)
-            paw->beginSequence();
+        paw->beginSequence();
 
         auto &children = node->children();
-        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[3]);
 
-        if (need_wrap == true)
-            paw->endSequence();
+        paw->endSequence();
     });
 
-    // Rule 23 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED 
+    //# Rule 28 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -910,7 +992,18 @@ static void _initLoaders () {
         _parseNode(text, paw, children[2]);
     });
     
-    // Rule 24 : SEQ_BLOCKED -> NODE 
+    //# Rule 29 : SEQ_BLOCKED -> NODE comma #new_line SEQ_BLOCKED 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+        _parseNode(text, paw, children[3]);
+    });
+    
+    //# Rule 30 : SEQ_BLOCKED -> NODE 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -920,7 +1013,7 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    // Rule 25 : NODE -> bool 
+    //# Rule 31 : NODE -> bool 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -934,7 +1027,7 @@ static void _initLoaders () {
         paw->pushBool((str == "true")? true: false, token->column, token->line);
     });
 
-    // Rule 26 : NODE -> int 
+    //# Rule 32 : NODE -> int 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -951,7 +1044,7 @@ static void _initLoaders () {
         paw->pushInt(v, token->column, token->line);
     });
 
-    // Rule 27 : NODE -> double 
+    //# Rule 33 : NODE -> double 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -968,7 +1061,7 @@ static void _initLoaders () {
         paw->pushDouble(v, token->column, token->line);
     });
 
-    // Rule 28 : NODE -> string 
+    //# Rule 34 : NODE -> string 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -985,7 +1078,7 @@ static void _initLoaders () {
                 token->line);
     });
 
-    // Rule 29 : NODE -> MAP 
+    //# Rule 35 : NODE -> MAP 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -995,7 +1088,7 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    // Rule 30 : NODE -> SEQUENCE 
+    //# Rule 36 : NODE -> CURL_MAP 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -1005,37 +1098,66 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    // Rule 0 : S' -> S 
-    // Rule 1 : S -> NODE 
-    // Rule 2 : KEY -> bool 
-    // Rule 3 : KEY -> int 
-    // Rule 4 : KEY -> double 
-    // Rule 5 : KEY -> string 
-    // Rule 6 : KV -> KEY colon #indent NODE #dedent 
-    // Rule 7 : KV -> KEY colon NODE 
-    // Rule 8 : KV -> KEY colon #indent #dedent 
-    // Rule 9 : KV -> KEY colon 
-    // Rule 10 : MAP -> curly_open curly_close 
-    // Rule 11 : MAP -> curly_open MAP_BLOCKED curly_close 
-    // Rule 12 : MAP -> KV MAP 
-    // Rule 13 : MAP -> KV 
-    // Rule 14 : KV_BLOCKED -> KEY colon NODE 
-    // Rule 15 : MAP_BLOCKED -> KV_BLOCKED 
-    // Rule 16 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED 
-    // Rule 17 : SEQ_ELEM -> dash NODE 
-    // Rule 18 : SEQ_ELEM -> dash #indent NODE #dedent 
-    // Rule 19 : SEQUENCE -> square_open square_close 
-    // Rule 20 : SEQUENCE -> square_open SEQ_BLOCKED square_close 
-    // Rule 21 : SEQUENCE -> SEQ_ELEM SEQUENCE 
-    // Rule 22 : SEQUENCE -> SEQ_ELEM 
-    // Rule 23 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED 
-    // Rule 24 : SEQ_BLOCKED -> NODE 
-    // Rule 25 : NODE -> bool 
-    // Rule 26 : NODE -> int 
-    // Rule 27 : NODE -> double 
-    // Rule 28 : NODE -> string 
-    // Rule 29 : NODE -> MAP 
-    // Rule 30 : NODE -> SEQUENCE 
+    //# Rule 37 : NODE -> SEQUENCE 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+    });
+
+    //# Rule 38 : NODE -> SQUARE_SEQ 
+    loader_funcs.push_back([](
+            const char *text,
+            const shared_ptr<PawPrint> &paw,
+            const shared_ptr<Node> &node){
+
+        auto &children = node->children();
+        _parseNode(text, paw, children[0]);
+    });
+
+
+    //# Rule 0 : S' -> S 
+    //# Rule 1 : S -> NODE 
+    //# Rule 2 : KEY -> bool 
+    //# Rule 3 : KEY -> int 
+    //# Rule 4 : KEY -> double 
+    //# Rule 5 : KEY -> string 
+    //# Rule 6 : KV -> KEY colon NODE #new_line 
+    //# Rule 7 : KV -> KEY colon #new_line #indent NODE #new_line #dedent 
+    //# Rule 8 : KV -> KEY colon #new_line 
+    //# Rule 9 : MAP -> KV MAP 
+    //# Rule 10 : MAP -> KV 
+    //# Rule 11 : CURL_MAP -> curly_open curly_close 
+    //# Rule 12 : CURL_MAP -> curly_open #new_line curly_close 
+    //# Rule 13 : CURL_MAP -> curly_open MAP_BLOCKED curly_close 
+    //# Rule 14 : CURL_MAP -> curly_open #new_line #indent MAP_BLOCKED #dedent curly_close 
+    //# Rule 15 : KV_BLOCKED -> KEY colon NODE 
+    //# Rule 16 : KV_BLOCKED -> KEY colon 
+    //# Rule 17 : MAP_BLOCKED -> KV_BLOCKED 
+    //# Rule 18 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED 
+    //# Rule 19 : MAP_BLOCKED -> KV_BLOCKED comma #new_line MAP_BLOCKED 
+    //# Rule 20 : SEQ_ELEM -> dash NODE 
+    //# Rule 21 : SEQ_ELEM -> dash #new_line #indent NODE #new_line #dedent 
+    //# Rule 22 : SEQUENCE -> SEQ_ELEM SEQUENCE 
+    //# Rule 23 : SEQUENCE -> SEQ_ELEM 
+    //# Rule 24 : SQUARE_SEQ -> square_open square_close 
+    //# Rule 25 : SQUARE_SEQ -> square_open SEQ_BLOCKED square_close 
+    //# Rule 26 : SQUARE_SEQ -> square_open #new_line square_close 
+    //# Rule 27 : SQUARE_SEQ -> square_open #new_line #indent SEQ_BLOCKED #dedent #new_line square_close 
+    //# Rule 28 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED 
+    //# Rule 29 : SEQ_BLOCKED -> NODE comma #new_line SEQ_BLOCKED 
+    //# Rule 30 : SEQ_BLOCKED -> NODE 
+    //# Rule 31 : NODE -> bool 
+    //# Rule 32 : NODE -> int 
+    //# Rule 33 : NODE -> double 
+    //# Rule 34 : NODE -> string 
+    //# Rule 35 : NODE -> MAP 
+    //# Rule 36 : NODE -> CURL_MAP 
+    //# Rule 37 : NODE -> SEQUENCE 
+    //# Rule 38 : NODE -> SQUARE_SEQ 
 
 }
 
@@ -1080,11 +1202,15 @@ shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
     vector<Token> indented;
     addIndentTokens(tokens, indented);
 
+    for (auto &t: indented)
+        cout << t.toString(text) << endl;
 
     // parse
     auto root = parsing_table_->generateParseTree(text, indented);
 	if (root == null)
 		return null;
+
+    cout << root->toString(text, 0, true) << endl;
 
     auto paw = make_shared<PawPrint>();
 	_parseNode(text, paw, root);
