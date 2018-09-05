@@ -185,6 +185,14 @@ static int _findAndAddToken (
         if (c == 0) {
             return idx;
         }if (c == '\n') {
+            tokens.push_back(
+                    Token(
+                        TokenType::NEW_LINE,
+                        idx,
+                        idx,
+                        indent,
+                        column,
+                        line));
             indent = 0;
             column = 0;
             ++line;
@@ -242,16 +250,6 @@ static int _findAndAddToken (
                             text, first_idx, idx - 1, indent, column, line, tokens);
 					if (is_ok == false)
 						return -1;
-
-                    tokens.push_back(
-                            Token(
-                                TokenType::NEW_LINE,
-                                idx,
-                                idx,
-                                indent,
-                                column,
-                                line));
-
 				}
                 return idx;
             }
@@ -419,6 +417,45 @@ bool PawPrintLoader::tokenize (const char *text, vector<Token> &tokens) {
     return true;
 }
 
+bool PawPrintLoader::preprocessTokens (
+        const vector<Token> &tokens, vector<Token> &preprocessed) {
+
+    if (tokens.size() <= 0)
+        return false;
+
+    preprocessed.clear();
+
+
+    for (int ti=0; ti<tokens.size(); ++ti) {
+        auto &t = tokens[ti];
+
+        // reduce newline chains
+        if (t.type == TokenType::NEW_LINE &&
+                ti - 1 >= 0 &&
+                tokens[ti-1].type == TokenType::NEW_LINE) {
+            continue;
+        }
+        
+        preprocessed.push_back(t);
+    }
+
+
+    // make tokens end with NEW_LINE
+    auto &last_t = preprocessed[preprocessed.size() - 1];
+    if (last_t.type != TokenType::NEW_LINE) {
+        preprocessed.push_back(
+                Token(
+                    TokenType::NEW_LINE,
+                    last_t.first_idx,
+                    last_t.last_idx,
+                    last_t.indent,
+                    last_t.column,
+                    last_t.line));
+    }
+
+    return true;
+}
+
 bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token> &indented) {
     if (tokens.size() <= 0)
         return false;
@@ -508,17 +545,6 @@ bool PawPrintLoader::addIndentTokens (const vector<Token> &tokens, vector<Token>
     }
 
     auto &last_t = tokens[tokens.size() - 1];
-    if (last_t.type != TokenType::NEW_LINE) {
-        indented.push_back(
-                Token(
-                    TokenType::NEW_LINE,
-                    last_t.first_idx,
-                    last_t.last_idx,
-                    last_t.indent,
-                    last_t.column,
-                    last_t.line));
-    }
-
     while (indent_stack.empty() == false) {
         indented.push_back(
                 Token(
@@ -1027,7 +1053,10 @@ static void _initLoaders () {
         paw->pushBool((str == "true")? true: false, token->column, token->line);
     });
 
-    //# Rule 32 : NODE -> int 
+    //# Rule 32 : NODE -> bool #new_line 
+    loader_funcs.push_back(loader_funcs[loader_funcs.size()-1]);
+
+    //# Rule 33 : NODE -> int 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -1044,7 +1073,10 @@ static void _initLoaders () {
         paw->pushInt(v, token->column, token->line);
     });
 
-    //# Rule 33 : NODE -> double 
+    //# Rule 34 : NODE -> int #new_line 
+    loader_funcs.push_back(loader_funcs[loader_funcs.size()-1]);
+
+    //# Rule 35 : NODE -> double 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -1061,7 +1093,10 @@ static void _initLoaders () {
         paw->pushDouble(v, token->column, token->line);
     });
 
-    //# Rule 34 : NODE -> string 
+    //# Rule 36 : NODE -> double #new_line 
+    loader_funcs.push_back(loader_funcs[loader_funcs.size()-1]);
+
+    //# Rule 37 : NODE -> string 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -1078,7 +1113,10 @@ static void _initLoaders () {
                 token->line);
     });
 
-    //# Rule 35 : NODE -> MAP 
+    //# Rule 38 : NODE -> string #new_line 
+    loader_funcs.push_back(loader_funcs[loader_funcs.size()-1]);
+
+    //# Rule 39 : NODE -> MAP 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -1088,7 +1126,7 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    //# Rule 36 : NODE -> CURL_MAP 
+    //# Rule 40 : NODE -> CURL_MAP 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -1098,7 +1136,10 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    //# Rule 37 : NODE -> SEQUENCE 
+    //# Rule 41 : NODE -> CURL_MAP #new_line 
+    loader_funcs.push_back(loader_funcs[loader_funcs.size()-1]);
+
+    //# Rule 42 : NODE -> SEQUENCE 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -1108,7 +1149,7 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
-    //# Rule 38 : NODE -> SQUARE_SEQ 
+    //# Rule 43 : NODE -> SQUARE_SEQ 
     loader_funcs.push_back([](
             const char *text,
             const shared_ptr<PawPrint> &paw,
@@ -1118,15 +1159,19 @@ static void _initLoaders () {
         _parseNode(text, paw, children[0]);
     });
 
+    //# Rule 44 : NODE -> SQUARE_SEQ #new_line 
+    loader_funcs.push_back(loader_funcs[loader_funcs.size()-1]);
 
+
+    //##### Rules
     //# Rule 0 : S' -> S 
     //# Rule 1 : S -> NODE 
     //# Rule 2 : KEY -> bool 
     //# Rule 3 : KEY -> int 
     //# Rule 4 : KEY -> double 
     //# Rule 5 : KEY -> string 
-    //# Rule 6 : KV -> KEY colon NODE #new_line 
-    //# Rule 7 : KV -> KEY colon #new_line #indent NODE #new_line #dedent 
+    //# Rule 6 : KV -> KEY colon NODE 
+    //# Rule 7 : KV -> KEY colon #new_line #indent NODE #dedent 
     //# Rule 8 : KV -> KEY colon #new_line 
     //# Rule 9 : MAP -> KV MAP 
     //# Rule 10 : MAP -> KV 
@@ -1140,24 +1185,30 @@ static void _initLoaders () {
     //# Rule 18 : MAP_BLOCKED -> KV_BLOCKED comma MAP_BLOCKED 
     //# Rule 19 : MAP_BLOCKED -> KV_BLOCKED comma #new_line MAP_BLOCKED 
     //# Rule 20 : SEQ_ELEM -> dash NODE 
-    //# Rule 21 : SEQ_ELEM -> dash #new_line #indent NODE #new_line #dedent 
+    //# Rule 21 : SEQ_ELEM -> dash #new_line #indent NODE #dedent 
     //# Rule 22 : SEQUENCE -> SEQ_ELEM SEQUENCE 
     //# Rule 23 : SEQUENCE -> SEQ_ELEM 
     //# Rule 24 : SQUARE_SEQ -> square_open square_close 
     //# Rule 25 : SQUARE_SEQ -> square_open SEQ_BLOCKED square_close 
     //# Rule 26 : SQUARE_SEQ -> square_open #new_line square_close 
-    //# Rule 27 : SQUARE_SEQ -> square_open #new_line #indent SEQ_BLOCKED #dedent #new_line square_close 
+    //# Rule 27 : SQUARE_SEQ -> square_open #new_line #indent SEQ_BLOCKED #dedent square_close 
     //# Rule 28 : SEQ_BLOCKED -> NODE comma SEQ_BLOCKED 
     //# Rule 29 : SEQ_BLOCKED -> NODE comma #new_line SEQ_BLOCKED 
     //# Rule 30 : SEQ_BLOCKED -> NODE 
     //# Rule 31 : NODE -> bool 
-    //# Rule 32 : NODE -> int 
-    //# Rule 33 : NODE -> double 
-    //# Rule 34 : NODE -> string 
-    //# Rule 35 : NODE -> MAP 
-    //# Rule 36 : NODE -> CURL_MAP 
-    //# Rule 37 : NODE -> SEQUENCE 
-    //# Rule 38 : NODE -> SQUARE_SEQ 
+    //# Rule 32 : NODE -> bool #new_line 
+    //# Rule 33 : NODE -> int 
+    //# Rule 34 : NODE -> int #new_line 
+    //# Rule 35 : NODE -> double 
+    //# Rule 36 : NODE -> double #new_line 
+    //# Rule 37 : NODE -> string 
+    //# Rule 38 : NODE -> string #new_line 
+    //# Rule 39 : NODE -> MAP 
+    //# Rule 40 : NODE -> CURL_MAP 
+    //# Rule 41 : NODE -> CURL_MAP #new_line 
+    //# Rule 42 : NODE -> SEQUENCE 
+    //# Rule 43 : NODE -> SQUARE_SEQ 
+    //# Rule 44 : NODE -> SQUARE_SEQ #new_line 
 
 }
 
@@ -1199,18 +1250,34 @@ shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
     if (is_tokenize_ok == false)
         return null;
 
-    vector<Token> indented;
-    addIndentTokens(tokens, indented);
+    /*
+    cout << "##### raw tokens" << endl;
+    for (auto &t: tokens)
+        cout << t.toString(text) << endl; //*/
 
+    vector<Token> preprocessed;
+    preprocessTokens(tokens, preprocessed);
+
+    /*
+    cout << "##### preprocessed" << endl;
+    for (auto &t: preprocessed)
+        cout << t.toString(text) << endl; //*/
+
+    vector<Token> indented;
+    addIndentTokens(preprocessed, indented);
+
+    /*
+    cout << "##### indented" << endl;
     for (auto &t: indented)
-        cout << t.toString(text) << endl;
+        cout << t.toString(text) << endl; //*/
 
     // parse
     auto root = parsing_table_->generateParseTree(text, indented);
 	if (root == null)
 		return null;
 
-    cout << root->toString(text, 0, true) << endl;
+    /*
+    cout << root->toString(text, 0, true) << endl; //*/
 
     auto paw = make_shared<PawPrint>();
 	_parseNode(text, paw, root);
