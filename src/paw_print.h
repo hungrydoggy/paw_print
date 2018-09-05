@@ -100,7 +100,7 @@ public:
 
         template <class T>
         T get (T default_value) const {
-            if (isConvertable<T>() == false)
+            if (is<T>() == false)
                 return default_value;
             return paw_print_->getData<T>(idx_ + sizeof(DataType));
         }
@@ -114,14 +114,22 @@ public:
 
         const Cursor& operator = (const Cursor &cursor);
 
-        const char* getKey (int idx) const;
+        Cursor getKeyValuePair (int idx) const;
 
         int size () const;
 
         string toString (int indent=0, int indent_inc=2, bool ignore_indent=false) const;
 
-        const char* getKeyOfPair () const;
-        Cursor getValueOfPair () const;
+        const char* getKey () const;
+        Cursor getValue () const;
+		inline const char* getKeyOfPair(int idx) const {
+			auto cursor = getKeyValuePair(idx);
+			return cursor.getKey();
+		}
+		inline Cursor getValueOfPair(int idx) const {
+			auto cursor = getKeyValuePair(idx);
+			return cursor.getValue();
+		}
 
         int getColumn () const;
         int getLine () const;
@@ -147,6 +155,7 @@ public:
     PawPrint (const Cursor &cursor);
     PawPrint (bool          value);
     PawPrint (int           value);
+    PawPrint (float         value);
     PawPrint (double        value);
     PawPrint (const char   *value);
     PawPrint (const string &value);
@@ -226,20 +235,23 @@ private:
     unordered_map<int, unsigned short> line_map_;
 };
 
-template<> bool PawPrint::Cursor::is<bool       > () const;
-template<> bool PawPrint::Cursor::is<int        > () const;
-template<> bool PawPrint::Cursor::is<double     > () const;
-template<> bool PawPrint::Cursor::is<const char*> () const;
-template<> bool PawPrint::Cursor::is<string     > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::is<bool       > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::is<int        > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::is<float      > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::is<double     > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::is<const char*> () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::is<string     > () const;
 
-template<> bool PawPrint::Cursor::isConvertable<bool       > () const;
-template<> bool PawPrint::Cursor::isConvertable<int        > () const;
-template<> bool PawPrint::Cursor::isConvertable<double     > () const;
-template<> bool PawPrint::Cursor::isConvertable<const char*> () const;
-template<> bool PawPrint::Cursor::isConvertable<string     > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::isConvertable<bool       > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::isConvertable<int        > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::isConvertable<float      > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::isConvertable<double     > () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::isConvertable<const char*> () const;
+template<> PAW_PRINT_API bool PawPrint::Cursor::isConvertable<string     > () const;
 
-template<> bool   PawPrint::Cursor::get<bool  > (bool          default_value) const;
-template<> double PawPrint::Cursor::get<double> (double        default_value) const;
+template<> PAW_PRINT_API bool   PawPrint::Cursor::get<bool  > (bool          default_value) const;
+template<> PAW_PRINT_API float  PawPrint::Cursor::get<float > (float         default_value) const;
+template<> PAW_PRINT_API double PawPrint::Cursor::get<double> (double        default_value) const;
 
 }
 

@@ -24,6 +24,7 @@ PawPrint::PawPrint (const Cursor &cursor)
 
 PawPrint::PawPrint (bool          value) :PawPrint() { pushBool  (value); }
 PawPrint::PawPrint (int           value) :PawPrint() { pushInt   (value); } 
+PawPrint::PawPrint (float         value) :PawPrint() { pushDouble(value); }
 PawPrint::PawPrint (double        value) :PawPrint() { pushDouble(value); }
 PawPrint::PawPrint (const char   *value) :PawPrint() { pushString(value); }
 PawPrint::PawPrint (const string &value) :PawPrint() { pushString(value); }

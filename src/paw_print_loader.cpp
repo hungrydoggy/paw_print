@@ -582,6 +582,43 @@ void PawPrintLoader::_initParsingTable () {
 }
 
 
+
+static string _makeEscapedString (const string &input_str) {
+	string result;
+	result.resize(input_str.size());
+
+	auto src =        input_str.data();
+	auto dst = (char*)result   .data();
+
+	int di = 0;
+	for (int si = 0; si < input_str.size(); ++si, ++di) {
+		if (src[si] != '\\') {
+			dst[di] = src[si];
+			continue;
+		}
+
+		++si;
+		switch (src[si]) {
+		case 'b' : dst[di] = '\b'; break;
+		case 'f' : dst[di] = '\f'; break;
+		case 'n' : dst[di] = '\n'; break;
+		case 'r' : dst[di] = '\r'; break;
+		case 't' : dst[di] = '\t'; break;
+		case '\\': dst[di] = '\\'; break;
+		case '\'': dst[di] = '\''; break;
+		case '\"': dst[di] = '\"'; break;
+		default:
+			dst[di] = '\\';
+			++di;
+			dst[di] = src[si];
+			break;
+		}
+	}
+
+	result.resize(di);
+	return result;
+}
+
 using LoaderFunc = function<
         void (
             const char *text,
@@ -940,9 +977,10 @@ static void _initLoaders () {
         auto &children = node->children();
         auto token = children[0]->token();
         paw->pushString(
-                string(
-                    text + token->first_idx,
-                    token->last_idx - token->first_idx + 1),
+                _makeEscapedString(
+					string(
+						text + token->first_idx,
+						token->last_idx - token->first_idx + 1)),
                 token->column,
                 token->line);
     });
