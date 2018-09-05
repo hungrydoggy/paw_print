@@ -1,0 +1,58 @@
+# close
+Sequence:
+    - SendMessage:
+        nam: 'hidePopupBG'
+        dst: '/'
+    
+    - Parallel:
+        - MoveXTo:
+            dur: 0.5
+            val:
+                '!list_get':
+                    val: '$self.pos'
+                    idx: 0
+            int: 'OutQuad'
+        - MoveYTo:
+            dur: 0.5
+            val:
+                '!list_get':
+                    val: '$self.pos'
+                    idx: 1
+            int: 'OutQuad'
+        - Sequence:
+            - Parallel:
+                - Sequence:
+                    - ScaleTo:
+                        dur: 0.5
+                        val: [1, 1, 1]
+                        int: 'OutQuad'
+                - Sequence:
+                    - RotateBy:
+                        dur: 0.12
+                        val: [0, -90, 0]
+                        #int: 'InQuad'
+                    
+                    # on flip
+                    - SetDrawable:
+                        tar: 'card'
+                        val: false
+                    - SetDrawable:
+                        tar: 'wrapper'
+                        val: true
+                    
+                    - RotateBy:
+                        dur: 0.12
+                        val: [0, -90, 0]
+                        #int: 'OutQuad'
+                    - Repeat:
+                        cnt: 1
+                        act:
+                            Sequence:
+                                - RotateBy:
+                                    dur: 0.12
+                                    val: [0, -90, 0]
+                                    #int: 'InQuad'
+                                - RotateBy:
+                                    dur: 0.12
+                                    val: [0, -90, 0]
+                                    #int: 'OutQuad'

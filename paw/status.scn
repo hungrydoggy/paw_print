@@ -1,0 +1,700 @@
+Scene:
+    cls: 'StatusScene'
+    nam: 'status_scene'
+    dbt: true
+    dsg: 20000
+    phy:
+        BulletPhysics:
+            gra: [0, -10, 0]
+            
+    chl:
+        - Camera:
+            nam: 'camera'
+            prj:
+                Projection:
+                    typ: 'orthogonal'
+            pos: [0, 0, 600]
+                
+        - GameObject:
+            nam: 'bg'
+            vie:
+                Sprite:
+                    img: 'images/status/status_bg.png'
+                    cel:
+                        - Cell:
+                            dur: 10
+                            src: [0, 0, 1, 1]
+                            anc: [0.5, 0.5]
+                            siz: [1000, 0]
+        
+        - '@objects/status/status_obj.obj':
+            nam: 'hp'
+            pos: [-353, 677, 1]
+            ref:
+                'icon_img' : 'images/status/icons/sta_ico_heart.png'
+                'icon_pos' : [0, -6, 1]
+                'icon_siz' : [68, 0]
+                'txt'      :
+                    '!str_plus': ['!status_val': 'hp', '/', '!status_val': 'hp.max']
+                'card_obj' :
+                    '@objects/card/status/hp.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+            
+        - '@objects/status/status_obj.obj':
+            nam: 'satiety'
+            pos: [-57, 677, 1]
+            ref:
+                'icon_img' : 'images/status/icons/sta_ico_hungry.png'
+                'icon_pos' : [-3, -1, 3]
+                'icon_siz' : [68, 0]
+                'txt'      :
+                    '!str_plus': ['!status_val': 'satiety', '/', '!status_val': 'satiety.max']
+                'card_obj' :
+                    '@objects/card/status/satiety.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+            
+        - '@objects/status/status_obj.obj':
+            nam: 'stamina'
+            pos: [235, 677, 1]
+            ref:
+                'icon_img' : 'images/status/icons/sta_ico_action.png'
+                'icon_pos' : [0, 2, 3]
+                'icon_siz' : [72, 0]
+                'txt'      :
+                    '!str_plus': ['!status_val': 'stamina', '/', '!status_val': 'stamina.max']
+                'card_obj' :
+                    '@objects/card/status/stamina.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+            
+        - '@objects/status/status_obj.obj':
+            nam: 'attack'
+            pos: [-353, 522, 1]
+            ref:
+                'icon_img' : 'images/status/icons/sta_ico_attack.png'
+                'icon_pos' : [-1, 0, 3]
+                'icon_siz' : [74, 0]
+                'txt'      :
+                    '!status_val': 'attack'
+                'card_obj' :
+                    '@objects/card/status/attack.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+            
+        - '@objects/status/status_obj.obj':
+            nam: 'defence'
+            pos: [-57, 522, 1]
+            ref:
+                'icon_img' : 'images/status/icons/sta_ico_defence.png'
+                'icon_pos' : [0, -3, 3]
+                'icon_siz' : [92, 0]
+                'txt'      :
+                    '!status_val': 'defence'
+                'card_obj' :
+                    '@objects/card/status/defence.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+            
+        - '@objects/status/status_obj.obj':
+            nam: 'fishing'
+            pos: [235, 522, 1]
+            ref:
+                'icon_img' : 'images/status/icons/sta_ico_fishing.png'
+                'icon_pos' : [-2, -2, 3]
+                'icon_siz' : [40, 0]
+                'txt'      :
+                    '!status_val': 'fishing'
+                'card_obj' :
+                    '@objects/card/status/fishing.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                
+        - '@objects/status/status_obj.obj':
+            nam: 'disease_resist'
+            pos: [-211, 368, 1]
+            ref:
+                'icon_img' : 'images/status/icons/sta_ico_resist_disease.png'
+                'icon_pos' : [0, 0, 3]
+                'icon_siz' : [74, 0]
+                'txt'      :
+                    '!status_val': 'disease_resist'
+                'card_obj' :
+                    '@objects/card/status/disease_resist.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                
+        - '@objects/status/status_obj.obj':
+            nam: 'ambush_resist'
+            pos: [95, 368, 1]
+            ref:
+                'icon_img' : 'images/status/icons/sta_ico_resist_ambush.png'
+                'icon_pos' : [0, 0, 3]
+                'icon_siz' : [74, 0]
+                'txt'      :
+                    '!status_val': 'ambush_resist'
+                'card_obj' :
+                    '@objects/card/status/ambush_resist.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+        
+        - '@objects/status/health_obj.obj':
+            nam: 'disease'
+            pos: [-328, 110, 1]
+            ref:
+                'icon_img' : 'images/status/icons/health_ico_disease.png'
+                'icon_pos' : [0, 10, 3]
+                'icon_siz' : [90, 0]
+                'card_obj' :
+                    '@objects/card/health/disease.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                
+        - '@objects/status/health_obj.obj':
+            nam: 'injury'
+            pos: [-109, 110, 1]
+            ref:
+                'icon_img' : 'images/status/icons/health_ico_injury.png'
+                'icon_pos' : [0, 10, 3]
+                'icon_siz' : [84, 0]
+                'card_obj' :
+                    '@objects/card/health/injury.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                
+        - '@objects/status/health_obj.obj':
+            nam: 'ambush'
+            pos: [109, 110, 1]
+            ref:
+                'icon_img' : 'images/status/icons/health_ico_ambush.png'
+                'icon_pos' : [0, 10, 3]
+                'icon_siz' : [80, 0]
+                'card_obj' :
+                    '@objects/card/health/ambush.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                
+        - '@objects/status/health_obj.obj':
+            nam: 'weird_drug'
+            pos: [328, 110, 0]
+            ref:
+                'icon_img' : 'images/status/icons/health_ico_weird_drug.png'
+                'icon_pos' : [0, 15, 3]
+                'icon_siz' : [58, 0]
+                'icon_bg_img': 'images/status/status_icon_blue.png'
+                'card_obj' :
+                    '@objects/card/health/weird_drug.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                
+        - '@objects/status/inventory/grass.obj':
+            nam: 'grass'
+            pos: [-349, -149, 1]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    rot: [0, 0, 45]
+                    hsz: [58, 58, 0]
+            chl:
+                - '@objects/card/inventory/grass.obj':
+                    nam: 'card'
+                    dra: false
+                    pos: [0, -80, 0]
+                    scl: [0.24, 0.24, 0.24]
+            pda:
+                ActionCall:
+                    act:
+                        '@actions/common/open_icon_card.act'
+                    roo: '.'
+                
+        - '@objects/status/inventory/stone.obj':
+            nam: 'stone'
+            pos: [-260, -256, 1]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    rot: [0, 0, 45]
+                    hsz: [58, 58, 0]
+            chl:
+                - '@objects/card/inventory/stone.obj':
+                    nam: 'card'
+                    dra: false
+                    pos: [0, -80, 0]
+                    scl: [0.24, 0.24, 0.24]
+            pda:
+                ActionCall:
+                    act:
+                        '@actions/common/open_icon_card.act'
+                    roo: '.'
+                
+        - '@objects/status/inventory/wood.obj':
+            nam: 'wood'
+            pos: [-174, -149, 1]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    rot: [0, 0, 45]
+                    hsz: [58, 58, 0]
+            chl:
+                - '@objects/card/inventory/wood.obj':
+                    nam: 'card'
+                    dra: false
+                    pos: [0, -80, 0]
+                    scl: [0.24, 0.24, 0.24]
+            pda:
+                ActionCall:
+                    act:
+                        '@actions/common/open_icon_card.act'
+                    roo: '.'
+                
+        - '@objects/status/inventory/fruit.obj':
+            nam: 'fruit'
+            pos: [-87, -256, 1]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    rot: [0, 0, 45]
+                    hsz: [58, 58, 0]
+            chl:
+                - '@objects/card/inventory/fruit.obj':
+                    nam: 'card'
+                    dra: false
+                    pos: [0, -80, 0]
+                    scl: [0.24, 0.24, 0.24]
+            pda:
+                ActionCall:
+                    act:
+                        '@actions/common/open_icon_card.act'
+                    roo: '.'
+                
+        - '@objects/status/inventory/fish.obj':
+            nam: 'fish'
+            pos: [0, -149, 1]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    rot: [0, 0, 45]
+                    hsz: [58, 58, 0]
+            chl:
+                - '@objects/card/inventory/fish.obj':
+                    nam: 'card'
+                    dra: false
+                    pos: [0, -80, 0]
+                    scl: [0.24, 0.24, 0.24]
+            pda:
+                ActionCall:
+                    act:
+                        '@actions/common/open_icon_card.act'
+                    roo: '.'
+                
+        - '@objects/status/inventory/meat.obj':
+            nam: 'meat'
+            pos: [87, -256, 1]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    rot: [0, 0, 45]
+                    hsz: [58, 58, 0]
+            chl:
+                - '@objects/card/inventory/meat.obj':
+                    nam: 'card'
+                    dra: false
+                    pos: [0, -80, 0]
+                    scl: [0.24, 0.24, 0.24]
+            pda:
+                ActionCall:
+                    act:
+                        '@actions/common/open_icon_card.act'
+                    roo: '.'
+                
+        - '@objects/status/inventory/monkey_tooth.obj':
+            nam: 'monkey_tooth'
+            pos: [174, -149, 1]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    rot: [0, 0, 45]
+                    hsz: [58, 58, 0]
+            chl:
+                - '@objects/card/inventory/monkey_tooth.obj':
+                    nam: 'card'
+                    dra: false
+                    pos: [0, -80, 0]
+                    scl: [0.24, 0.24, 0.24]
+            pda:
+                ActionCall:
+                    act:
+                        '@actions/common/open_icon_card.act'
+                    roo: '.'
+                
+        - '@objects/status/inventory/snake_poison.obj':
+            nam: 'snake_poison'
+            pos: [260, -256, 1]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    rot: [0, 0, 45]
+                    hsz: [58, 58, 0]
+            chl:
+                - '@objects/card/inventory/snake_poison.obj':
+                    nam: 'card'
+                    dra: false
+                    pos: [0, -80, 0]
+                    scl: [0.24, 0.24, 0.24]
+            pda:
+                ActionCall:
+                    act:
+                        '@actions/common/open_icon_card.act'
+                    roo: '.'
+                
+        - '@objects/status/inventory/bear_claw.obj':
+            nam: 'bear_claw'
+            pos: [349, -149, 1]
+            bdy:
+                BulletBody:
+                    mas: 0
+            shp:
+                - BulletShape:
+                    cls: 'Box'
+                    rot: [0, 0, 45]
+                    hsz: [58, 58, 0]
+            chl:
+                - '@objects/card/inventory/bear_claw.obj':
+                    nam: 'card'
+                    dra: false
+                    pos: [0, -80, 0]
+                    scl: [0.24, 0.24, 0.24]
+            pda:
+                ActionCall:
+                    act:
+                        '@actions/common/open_icon_card.act'
+                    roo: '.'
+        
+        - '@objects/status/craft_obj.obj':
+            nam: 'weapon'
+            pos: [-262, -533, 1]
+            ref:
+                'icon_0_pos': [0, 8, 0]
+                'icon_0_img': 'images/icon/craft/weapon_00.png'
+                'icon_0_scl': [0.25, 0.25, 1]
+                
+                'icon_1_pos': [-8, 8, 0]
+                'icon_1_img': 'images/icon/craft/weapon_01.png'
+                'icon_1_scl': [0.25, 0.25, 1]
+                
+                'icon_2_pos': [-8, 8, 0]
+                'icon_2_img': 'images/icon/craft/weapon_02.png'
+                'icon_2_scl': [0.25, 0.25, 1]
+                
+                'icon_3_pos': [-8, 8, 0]
+                'icon_3_img': 'images/icon/craft/weapon_03.png'
+                'icon_3_scl': [0.25, 0.25, 1]
+                
+                'icon_4_pos': [-8, 8, 0]
+                'icon_4_img': 'images/icon/craft/weapon_04.png'
+                'icon_4_scl': [0.25, 0.25, 1]
+                
+                'card_obj' :
+                    '@objects/card/craft_card.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                        ref:
+                            'type'  : 'weapon'
+                            'title' : 'Weapon'
+                            'summary' : '무기'
+                            'description' : "항상 피할 수는 없는 법.\n생존을 위해서는 방어력은 필수!\n갑옷으로 신체를 보호하세요"
+                            
+                            'icon_0_scl': [0.8, 0.8, 1]
+                            'icon_1_scl': [0.8, 0.8, 1]
+                            'icon_2_scl': [0.8, 0.8, 1]
+                            'icon_3_scl': [0.8, 0.8, 1]
+                            'icon_4_scl': [0.8, 0.8, 1]
+                
+        - '@objects/status/craft_obj.obj':
+            nam: 'clothes'
+            pos: [0, -533, 1]
+            ref:
+                'icon_0_pos': [0, 10, 0]
+                'icon_0_img': 'images/icon/craft/clothes_00.png'
+                'icon_0_scl': [0.25, 0.25, 1]
+                
+                'icon_1_pos': [0, 10, 0]
+                'icon_1_img': 'images/icon/craft/clothes_01.png'
+                'icon_1_scl': [0.25, 0.25, 1]
+                
+                'icon_2_pos': [0, 10, 0]
+                'icon_2_img': 'images/icon/craft/clothes_02.png'
+                'icon_2_scl': [0.25, 0.25, 1]
+                
+                'icon_3_pos': [0, 16, 0]
+                'icon_3_img': 'images/icon/craft/clothes_03.png'
+                'icon_3_scl': [0.25, 0.25, 1]
+                
+                'card_obj' :
+                    '@objects/card/craft_card.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                        ref:
+                            'type'  : 'clothes'
+                            'title' : 'Clothes'
+                            'summary' : '옷'
+                            'description' : "항상 피할 수는 없는 법.\n생존을 위해서는 방어력은 필수!\n갑옷으로 신체를 보호하세요"
+                            
+                            'icon_0_scl': [0.8, 0.8, 1]
+                            
+                            'icon_1_scl': [0.8, 0.8, 1]
+                            
+                            'icon_2_scl': [0.8, 0.8, 1]
+                            
+                            'icon_3_scl': [0.8, 0.8, 1]
+                
+        - '@objects/status/craft_obj.obj':
+            nam: 'fire'
+            pos: [262, -533, 1]
+            ref:
+                'icon_0_pos': [0, 14, 0]
+                'icon_0_img': 'images/icon/craft/fire_00.png'
+                'icon_0_scl': [0.25, 0.25, 1]
+                
+                'icon_1_pos': [0, 14, 0]
+                'icon_1_img': 'images/icon/craft/fire_01.png'
+                'icon_1_scl': [0.25, 0.25, 1]
+                
+                'icon_2_pos': [0, 24, 0]
+                'icon_2_img': 'images/icon/craft/fire_02.png'
+                'icon_2_scl': [0.25, 0.25, 1]
+                
+                'card_obj' :
+                    '@objects/card/craft_card.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                        ref:
+                            'type'  : 'fire'
+                            'title' : 'Fire'
+                            'summary' : '불'
+                            'description' : "항상 피할 수는 없는 법.\n생존을 위해서는 방어력은 필수!\n갑옷으로 신체를 보호하세요"
+                            
+                            'icon_0_scl': [0.8, 0.8, 1]
+                            'icon_1_scl': [0.8, 0.8, 1]
+                            'icon_2_pos': [0, 40, 0]
+                            'icon_2_scl': [0.8, 0.8, 1]
+        
+        - '@objects/status/craft_obj.obj':
+            nam: 'house'
+            pos: [-262, -726, 1]
+            ref:
+                'icon_0_pos': [0, 12, 0]
+                'icon_0_img': 'images/icon/craft/house_00.png'
+                'icon_0_scl': [0.25, 0.25, 1]
+                
+                'icon_1_pos': [0, 16, 0]
+                'icon_1_img': 'images/icon/craft/house_01.png'
+                'icon_1_scl': [0.25, 0.25, 1]
+                
+                'icon_2_pos': [0, 23, 0]
+                'icon_2_img': 'images/icon/craft/house_02.png'
+                'icon_2_scl': [0.25, 0.25, 1]
+                
+                'icon_3_pos': [-8, 16, 0]
+                'icon_3_img': 'images/icon/craft/house_03.png'
+                'icon_3_scl': [0.25, 0.25, 1]
+                
+                'card_obj' :
+                    '@objects/card/craft_card.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                        ref:
+                            'type'  : 'house'
+                            'title' : 'House'
+                            'summary' : '집'
+                            'description' : "항상 피할 수는 없는 법.\n생존을 위해서는 방어력은 필수!\n갑옷으로 신체를 보호하세요"
+                            
+                            'icon_0_pos': [0, 14, 1]
+                            'icon_0_scl': [0.8, 0.8, 1]
+                            
+                            'icon_1_pos': [0, 20, 1]
+                            'icon_1_scl': [0.8, 0.8, 1]
+                            
+                            'icon_2_pos': [0, 30, 1]
+                            'icon_2_scl': [0.8, 0.8, 1]
+                            
+                            'icon_3_pos': [-10, 20, 1]
+                            'icon_3_scl': [0.8, 0.8, 1]
+        
+        - '@objects/status/craft_obj.obj':
+            nam: 'wall'
+            pos: [0, -726, 1]
+            ref:
+                'icon_0_pos': [0, 8, 0]
+                'icon_0_img': 'images/icon/craft/wall_00.png'
+                'icon_0_scl': [0.25, 0.25, 1]
+                
+                'icon_1_pos': [0, 8, 0]
+                'icon_1_img': 'images/icon/craft/wall_01.png'
+                'icon_1_scl': [0.25, 0.25, 1]
+                
+                'icon_2_pos': [0, 8, 0]
+                'icon_2_img': 'images/icon/craft/wall_02.png'
+                'icon_2_scl': [0.25, 0.25, 1]
+                
+                'icon_3_pos': [0, 8, 0]
+                'icon_3_img': 'images/icon/craft/wall_03.png'
+                'icon_3_scl': [0.25, 0.25, 1]
+                
+                'card_obj' :
+                    '@objects/card/craft_card.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                        ref:
+                            'type'  : 'wall'
+                            'title' : 'Wall'
+                            'summary' : '벽'
+                            'description' : "항상 피할 수는 없는 법.\n생존을 위해서는 방어력은 필수!\n갑옷으로 신체를 보호하세요"
+                            
+                            'icon_0_pos': [0, 0, 1]
+                            'icon_0_scl': [0.8, 0.8, 1]
+                            
+                            'icon_1_pos': [0, 5, 1]
+                            'icon_1_scl': [0.8, 0.8, 1]
+                            
+                            'icon_2_pos': [0, 0, 1]
+                            'icon_2_scl': [0.8, 0.8, 1]
+                            
+                            'icon_3_pos': [0, 10, 1]
+                            'icon_3_scl': [0.8, 0.8, 1]
+            
+        
+        - '@objects/status/craft_obj.obj':
+            nam: 'fishing_rod'
+            pos: [262, -726, 1]
+            ref:
+                'icon_0_pos': [2, 20, 0]
+                'icon_0_img': 'images/icon/craft/fishing_rod_00.png'
+                'icon_0_scl': [0.23, 0.23, 1]
+                
+                'icon_1_pos': [5, 5, 0]
+                'icon_1_img': 'images/status/icons/craft_ico_fishing_01.png'
+                'icon_1_scl': [0.9, 0.9, 1]
+                
+                'icon_2_pos': [8, 5, 0]
+                'icon_2_img': 'images/status/icons/craft_ico_fishing_02.png'
+                'icon_2_scl': [0.9, 0.9, 1]
+                
+                'icon_3_pos': [5, 3, 0]
+                'icon_3_img': 'images/status/icons/craft_ico_fishing_03.png'
+                'icon_3_scl': [0.9, 0.9, 1]
+                
+                'card_obj' :
+                    '@objects/card/craft_card.obj':
+                        pos: [0, -80, 0]
+                        scl: [0.24, 0.24, 0.24]
+                        dra: false
+                        ref:
+                            'type'  : 'fishing_rod'
+                            'title' : "Fishing\nrod"
+                            'title_scl': [0.8, 0.8, 0.8]
+                            'summary' : '낚시대'
+                            'description' : "항상 피할 수는 없는 법.\n생존을 위해서는 방어력은 필수!\n갑옷으로 신체를 보호하세요"
+                            
+                            'icon_0_pos': [0, 0, 1]
+                            'icon_0_scl': [0.8, 0.8, 1]
+                            
+                            'icon_1_pos': [0, 5, 1]
+                            'icon_1_scl': [0.8, 0.8, 1]
+                            
+                            'icon_2_pos': [0, 0, 1]
+                            'icon_2_scl': [0.8, 0.8, 1]
+                            
+                            'icon_3_pos': [0, 10, 1]
+                            'icon_3_scl': [0.8, 0.8, 1]
+        
+        - GameObject:
+            nam: 'close_button'
+            vie:
+                Sprite:
+                    img: 'images/x.png'
+                    cel:
+                        - Cell:
+                            dur: 10
+                            src: [0, 0, 1, 1]
+                            anc: [0.5, 0.5]
+                            siz: [43, 0]
+            pos: [445, 835, 1]
+            bdy :
+                BulletBody :
+                    mas : 0
+                    fri : 1
+            shp :
+                - BulletShape:
+                    cls: 'Box'
+                    hsz: [30, 30, 0]
+                    pos: [0, 0, 0]
+            pda:
+                ActionCall:
+                    ner: true
+                    act: '@actions/craft_card/close.act'
+                    roo: '../..'
+        
+        - '@objects/popup_bg.obj':
+            dra: false
+            pos: [0, 0, 100]
+            col: [0, 0, 0, 0]
+            
+        
+        - '@objects/popup_bg.obj':
+            dra: false
+            dbt: true
+            dsg: 20001
+            nam: 'popup_bg_over_card'
+            pos: [0, 0, 600]
+            col: [0, 0, 0, 0]
+            
+        - '@objects/ui/popup/upgrade_result.obj':
+            dra: false
+            dbt: true
+            dsg: 20001
+            nam: 'popup_upgrade_result'
+            pos: [0, 0, 610]
+

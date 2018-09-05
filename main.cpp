@@ -774,8 +774,107 @@ static void _t_load_settings () {
     assert(paw->root().toString() == correct);
 }
 
+static void _t_load_open_icon_card_close_part () {
+    cout << "load open_icon_card_close_part.obj" << endl;
+#if _WINDOWS
+    auto paw = _loadPaw("../../paw/open_icon_card_close_part.act");
+#else
+    auto paw = _loadPaw("../paw/open_icon_card_close_part.act");
+#endif
+    assert(paw != null);
+
+    auto correct =
+		"Sequence :\n" \
+		"  - SendMessage :\n" \
+		"      nam :\n" \
+		"        \"hidePopupBG\"\n" \
+		"      dst :\n" \
+		"        \"/\"\n" \
+		"  - Parallel :\n" \
+		"      - MoveXTo :\n" \
+		"          dur :\n" \
+		"            0.50000000\n" \
+		"          val :\n" \
+		"            !list_get :\n" \
+		"              val :\n" \
+		"                \"$self.pos\"\n" \
+		"              idx :\n" \
+		"                0\n" \
+		"          int :\n" \
+		"            \"OutQuad\"\n" \
+		"      - MoveYTo :\n" \
+		"          dur :\n" \
+		"            0.50000000\n" \
+		"          val :\n" \
+		"            !list_get :\n" \
+		"              val :\n" \
+		"                \"$self.pos\"\n" \
+		"              idx :\n" \
+		"                1\n" \
+		"          int :\n" \
+		"            \"OutQuad\"\n" \
+		"      - Sequence :\n" \
+		"          - Parallel :\n" \
+		"              - Sequence :\n" \
+		"                  - ScaleTo :\n" \
+		"                      dur :\n" \
+		"                        0.50000000\n" \
+		"                      val :\n" \
+		"                        - 1\n" \
+		"                        - 1\n" \
+		"                        - 1\n" \
+		"                      int :\n" \
+		"                        \"OutQuad\"\n" \
+		"              - Sequence :\n" \
+		"                  - RotateBy :\n" \
+		"                      dur :\n" \
+		"                        0.12000000\n" \
+		"                      val :\n" \
+		"                        - 0\n" \
+		"                        - -90\n" \
+		"                        - 0\n" \
+		"                  - SetDrawable :\n" \
+		"                      tar :\n" \
+		"                        \"card\"\n" \
+		"                      val :\n" \
+		"                        false\n" \
+		"                  - SetDrawable :\n" \
+		"                      tar :\n" \
+		"                        \"wrapper\"\n" \
+		"                      val :\n" \
+		"                        true\n" \
+		"                  - RotateBy :\n" \
+		"                      dur :\n" \
+		"                        0.12000000\n" \
+		"                      val :\n" \
+		"                        - 0\n" \
+		"                        - -90\n" \
+		"                        - 0\n" \
+		"                  - Repeat :\n" \
+		"                      cnt :\n" \
+		"                        1\n" \
+		"                      act :\n" \
+		"                        Sequence :\n" \
+		"                          - RotateBy :\n" \
+		"                              dur :\n" \
+		"                                0.12000000\n" \
+		"                              val :\n" \
+		"                                - 0\n" \
+		"                                - -90\n" \
+		"                                - 0\n" \
+		"                          - RotateBy :\n" \
+		"                              dur :\n" \
+		"                                0.12000000\n" \
+		"                              val :\n" \
+		"                                - 0\n" \
+		"                                - -90\n" \
+		"                                - 0\n";
+    cout << paw->root().toString();
+    assert(paw->root().toString() == correct);
+}
+
 int main () {
-    _t_basic();
+    /*_t_basic();
     _t_loadParsingTree();
 	_t_load_map_paws();
 	_t_load_boss_appear_snake();
@@ -783,6 +882,7 @@ int main () {
 	_t_load_obj_shell();
 	_t_load_dialogue();
 	_t_load_chance();
-	_t_load_settings();
+	_t_load_settings();*/
+	_t_load_open_icon_card_close_part();
     return 0;
 }

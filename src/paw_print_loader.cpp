@@ -1266,7 +1266,7 @@ shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
     vector<Token> indented;
     addIndentTokens(preprocessed, indented);
 
-    /*
+    //*
     cout << "##### indented" << endl;
     for (auto &t: indented)
         cout << t.toString(text) << endl; //*/
