@@ -1,15 +1,12 @@
 #include "./paw_print.h"
 
 #include <iomanip>
-#include <iostream>
 #include <sstream>
 
 
 namespace paw_print {
 
 
-using std::cout;
-using std::endl;
 using std::stringstream;
 using std::to_string;
 

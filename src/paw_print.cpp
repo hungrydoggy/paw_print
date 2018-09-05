@@ -94,6 +94,15 @@ DataType PawPrint::type (int idx) const {
     return getData<DataType>(idx);
 }
 
+bool PawPrint::isReference (int idx) const {
+    return _getRawData<DataType>(idx) == Data::TYPE_REFERENCE;
+}
+
+const PawPrint::Cursor& PawPrint::_getReference (int idx) const {
+    auto ri = _getRawData<PawPrint::Data::ReferenceIdxType>(idx + sizeof(DataType));
+    return references_[ri];
+}
+
 PawPrint::Data::StrSizeType PawPrint::getStrSize (int idx) const {
     return getData<PawPrint::Data::StrSizeType>(idx + sizeof(DataType));
 }
@@ -141,6 +150,10 @@ int PawPrint::dataSize (int idx) const {
         case Data::TYPE_KEY_VALUE_PAIR:
             result += dataSize(idx + result); // key size
             result += dataSize(idx + result); // value size
+            break;
+
+        case Data::TYPE_REFERENCE:
+            result += sizeof(Data::ReferenceIdxType);
             break;
 
         default: break;
@@ -312,6 +325,28 @@ void PawPrint::pushString (const char *value, int column, int line) {
     auto p = (const char*)&raw_data_[
             old_size + sizeof(DataType) + sizeof(Data::StrSizeType)];
     memcpy((void*)p, (void*)value, sizeof(const char) * str_count);
+
+    if (column >= 0)
+        column_map_[old_size] = (unsigned short)column;
+    if (line >= 0)
+        line_map_[old_size] = (unsigned short)line;
+}
+
+void PawPrint::pushReference (const Cursor &cursor, int column, int line) {
+    if (is_closed_ == true)
+        return;
+
+    int old_size = raw_data_.size();
+    raw_data_.resize(
+            old_size
+            + sizeof(DataType)
+            + sizeof(Data::ReferenceIdxType));
+    *((DataType*              )&raw_data_[old_size                   ]) =
+            Data::TYPE_REFERENCE;
+    *((Data::ReferenceIdxType*)&raw_data_[old_size + sizeof(DataType)]) =
+            references_.size();
+
+    references_.push_back(cursor);
 
     if (column >= 0)
         column_map_[old_size] = (unsigned short)column;

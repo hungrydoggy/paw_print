@@ -1,10 +1,11 @@
 #ifndef PAW_PRINT
 #define PAW_PRINT
 
-#include <unordered_map>
-#include <vector>
+#include <iostream>
 #include <stack>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <token.h>
 #include <node.h>
@@ -13,6 +14,8 @@
 namespace paw_print {
 
 
+using std::cout;
+using std::endl;
 using std::stack;
 using std::string;
 using std::unordered_map;
@@ -50,6 +53,7 @@ public:
 	class PAW_PRINT_API Data {
 	public:
 		using StrSizeType = unsigned short;
+		using ReferenceIdxType = unsigned int;
 
 		static const DataType TYPE_NONE = 0xff;
 
@@ -69,6 +73,8 @@ public:
 		static const DataType TYPE_MAP_END   = 8;
 
 		static const DataType TYPE_KEY_VALUE_PAIR = 9;
+
+		static const DataType TYPE_REFERENCE = 10;
 	};
 
     class PAW_PRINT_API Cursor {
@@ -170,6 +176,7 @@ public:
     const PawPrint& operator = (const Cursor &cursor);
 
     DataType type (int idx) const;
+    bool isReference (int idx) const;
 
     int dataSize (int idx) const;
 
@@ -193,6 +200,7 @@ public:
     inline void pushKey (const string &value, int column=-1, int line=-1) {
         return pushKey(value.c_str(), column, line);
     }
+    void pushReference (const Cursor &cursor, int column=-1, int line=-1);
     void beginSequence (int column=-1, int line=-1); 
     void endSequence   (int column=-1, int line=-1); 
     void beginMap (int column=-1, int line=-1); 
@@ -210,7 +218,18 @@ public:
 
     template <class T>
     const T& getData (int idx) const {
-        return *((T*)&raw_data_[idx]);
+        static T default_value;
+        if (isReference(idx) == true) {
+            auto &c = _getReference(idx);
+            if (c.isValid() == false) {
+                cout << "err: reference (idx:" << idx << ") is invalid" << endl;
+                return default_value;
+            }
+
+            return c.paw_print()->getData<T>(c.idx());
+        }
+        
+        return _getRawData<T>(idx);
     }
 
     const vector<int>& getDataIdxsOfSequence (int sequence_idx) const;
@@ -230,10 +249,20 @@ private:
 	mutable unordered_map<int, vector<int>> sorted_data_idxs_of_map_map_;
     bool is_closed_;
 
+    vector<Cursor> references_;
+
     stack<int> curly_open_idx_stack_;
     stack<int> square_open_idx_stack_;
     unordered_map<int, unsigned short> column_map_;
     unordered_map<int, unsigned short> line_map_;
+
+
+    template <class T>
+    const T& _getRawData (int idx) const {
+        return *((T*)&raw_data_[idx]);
+    }
+
+    const Cursor& _getReference (int idx) const;
 };
 
 template<> PAW_PRINT_API bool PawPrint::Cursor::is<bool       > () const;
