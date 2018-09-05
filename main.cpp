@@ -869,7 +869,6 @@ static void _t_load_open_icon_card_close_part () {
 		"                                - 0\n" \
 		"                                - -90\n" \
 		"                                - 0\n";
-    cout << paw->root().toString();
     assert(paw->root().toString() == correct);
 }
 

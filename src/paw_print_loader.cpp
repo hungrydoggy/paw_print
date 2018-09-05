@@ -429,6 +429,10 @@ bool PawPrintLoader::preprocessTokens (
     for (int ti=0; ti<tokens.size(); ++ti) {
         auto &t = tokens[ti];
 
+		// skip newline of first line
+		if (ti == 0 && t.type == TokenType::NEW_LINE)
+			continue;
+
         // reduce newline chains
         if (t.type == TokenType::NEW_LINE &&
                 ti - 1 >= 0 &&
@@ -1266,7 +1270,7 @@ shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
     vector<Token> indented;
     addIndentTokens(preprocessed, indented);
 
-    //*
+    /*
     cout << "##### indented" << endl;
     for (auto &t: indented)
         cout << t.toString(text) << endl; //*/
