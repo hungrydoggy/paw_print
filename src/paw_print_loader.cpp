@@ -1245,7 +1245,7 @@ static void _parseNode (
     return loader(text, paw, node);
 }
 
-shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
+shared_ptr<PawPrint> PawPrintLoader::loadText (const string &name, const char *text) {
     _initParsingTable();
 
     // tokenize
@@ -1283,7 +1283,7 @@ shared_ptr<PawPrint> PawPrintLoader::loadText (const char *text) {
     /*
     cout << root->toString(text, 0, true) << endl; //*/
 
-    auto paw = make_shared<PawPrint>();
+    auto paw = make_shared<PawPrint>(name);
 	_parseNode(text, paw, root);
 
     return paw;

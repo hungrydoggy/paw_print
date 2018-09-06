@@ -106,6 +106,9 @@ public:
         bool isNull () const;
 
         inline bool isValid () const {
+			if (paw_print_ == null)
+				return false;
+
 			if (paw_print_->isReference(idx_) == true)
 				return paw_print_->_getReference(idx_).isValid();
 			
@@ -170,7 +173,7 @@ public:
 
 	PAW_GETTER_SETTER(const string&, name)
 
-    PawPrint ();
+    PawPrint (const string &name);
     PawPrint (const string &name, const vector<unsigned char> &raw_data);
     PawPrint (const string &name, const Cursor &cursor);
     PawPrint (const string &name, bool          value);
@@ -202,24 +205,24 @@ public:
 
 
     // write
-    void pushNull   (int column=-1, int line=-1); 
-    void pushBool   (bool   value, int column=-1, int line=-1); 
-    void pushInt    (int    value, int column=-1, int line=-1); 
-    void pushDouble (double value, int column=-1, int line=-1); 
-    void pushString (const char *value, int column=-1, int line=-1); 
-    inline void pushString (const string &value, int column=-1, int line=-1) {
+    int pushNull   (int column=-1, int line=-1); 
+    int pushBool   (bool   value, int column=-1, int line=-1); 
+    int pushInt    (int    value, int column=-1, int line=-1); 
+    int pushDouble (double value, int column=-1, int line=-1); 
+    int pushString (const char *value, int column=-1, int line=-1); 
+    inline int pushString (const string &value, int column=-1, int line=-1) {
         return pushString(value.c_str(), column, line);
     }
-    void pushKeyValuePair (int column=-1, int line=-1);
-    void pushKey (const char *value, int column=-1, int line=-1);
-    inline void pushKey (const string &value, int column=-1, int line=-1) {
+    int pushKeyValuePair (int column=-1, int line=-1);
+    int pushKey (const char *value, int column=-1, int line=-1);
+    inline int pushKey (const string &value, int column=-1, int line=-1) {
         return pushKey(value.c_str(), column, line);
     }
-    void pushReference (const Cursor &cursor, int column=-1, int line=-1);
-    void beginSequence (int column=-1, int line=-1); 
-    void endSequence   (int column=-1, int line=-1); 
-    void beginMap (int column=-1, int line=-1); 
-    void endMap   (int column=-1, int line=-1); 
+    int pushReference (const Cursor &cursor, int column=-1, int line=-1);
+	int beginSequence (int column=-1, int line=-1);
+	int endSequence   (int column=-1, int line=-1);
+	int beginMap (int column=-1, int line=-1);
+	int endMap   (int column=-1, int line=-1);
 
 
     // read

@@ -669,7 +669,7 @@ static void _pushNonterminal (const shared_ptr<Nonterminal> &non, PawPrint &paw)
 }
 
 bool ParsingTable::saveBinary (vector<unsigned char> &result) {
-    PawPrint paw;
+    PawPrint paw("parsing table");
 
     paw.beginSequence();
     

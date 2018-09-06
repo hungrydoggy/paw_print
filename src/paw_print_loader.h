@@ -21,7 +21,7 @@ class PawPrint;
 class PAW_PRINT_API PawPrintLoader {
 public:
     
-    static shared_ptr<PawPrint> loadText (const char *text);
+    static shared_ptr<PawPrint> loadText (const string &name, const char *text);
 
     static bool tokenize (const char *text, vector<Token> &tokens);
     static bool preprocessTokens (const vector<Token> &tokens, vector<Token> &preprocessed);
