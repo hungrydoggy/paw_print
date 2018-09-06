@@ -578,7 +578,7 @@ static void _loadNonterminal(
 
 ParsingTable::ParsingTable (const vector<unsigned char> &data) {
 
-    PawPrint paw(data);
+    PawPrint paw("parsing table", data);
     auto root = paw.root();
 
     unordered_map<string, shared_ptr<TerminalBase>> termnon_map;

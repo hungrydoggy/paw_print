@@ -12,25 +12,25 @@ PawPrint::PawPrint ()
 :is_closed_(false) {
 }
 
-PawPrint::PawPrint (const vector<unsigned char> &raw_data)
+PawPrint::PawPrint (const string &name, const vector<unsigned char> &raw_data)
 :PawPrint() {
     setRawData(raw_data);
 }
 
-PawPrint::PawPrint (const Cursor &cursor)
+PawPrint::PawPrint (const string &name, const Cursor &cursor)
 :PawPrint() {
     operator = (cursor);
 }
 
-PawPrint::PawPrint (bool          value) :PawPrint() { pushBool  (value); }
-PawPrint::PawPrint (int           value) :PawPrint() { pushInt   (value); } 
-PawPrint::PawPrint (float         value) :PawPrint() { pushDouble(value); }
-PawPrint::PawPrint (double        value) :PawPrint() { pushDouble(value); }
-PawPrint::PawPrint (const char   *value) :PawPrint() { pushString(value); }
-PawPrint::PawPrint (const string &value) :PawPrint() { pushString(value); }
+PawPrint::PawPrint (const string &name, bool          value) :PawPrint() { pushBool  (value); }
+PawPrint::PawPrint (const string &name, int           value) :PawPrint() { pushInt   (value); }
+PawPrint::PawPrint (const string &name, float         value) :PawPrint() { pushDouble(value); }
+PawPrint::PawPrint (const string &name, double        value) :PawPrint() { pushDouble(value); }
+PawPrint::PawPrint (const string &name, const char   *value) :PawPrint() { pushString(value); }
+PawPrint::PawPrint (const string &name, const string &value) :PawPrint() { pushString(value); }
 
 #define PAW_PRINT_VECTOR_CONSTRUCTOR(TYPE, PUSH_TYPE) \
-    PawPrint::PawPrint (const vector<TYPE> &value) \
+    PawPrint::PawPrint (const string &name, const vector<TYPE> &value) \
     :PawPrint() { \
         beginSequence(); \
             for (auto v : value) { \
@@ -88,6 +88,20 @@ PawPrint::Cursor PawPrint::root () const {
         return Cursor(this, -1);
 
     return Cursor(this, 0);
+}
+
+PawPrint::Cursor PawPrint::makeCursor (int idx) const {
+	if (isReference(idx) == false)
+		return Cursor(this, idx);
+
+	// for reference
+	auto &c = _getReference(idx - sizeof(DataType));
+	if (c.isValid() == false) {
+		cout << "err: reference (name: "<< name_ << ", idx:" << idx << ") is invalid" << endl;
+		return Cursor(this, -1);
+	}
+
+	return c.paw_print()->makeCursor(c.idx());
 }
 
 DataType PawPrint::type (int idx) const {
