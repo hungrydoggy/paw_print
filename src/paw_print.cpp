@@ -104,7 +104,7 @@ const PawPrint::Cursor& PawPrint::_getReference (int idx) const {
 }
 
 PawPrint::Data::StrSizeType PawPrint::getStrSize (int idx) const {
-    return getData<PawPrint::Data::StrSizeType>(idx + sizeof(DataType));
+    return _getRawData<PawPrint::Data::StrSizeType>(idx + sizeof(DataType));
 }
 
 const char* PawPrint::getStrValue (int idx) const {

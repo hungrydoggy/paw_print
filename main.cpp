@@ -924,7 +924,7 @@ static void _t_reference_simple () {
 }
 
 int main () {
-    _t_basic();
+    /*_t_basic();
     _t_loadParsingTree();
 	_t_load_map_paws();
 	_t_load_boss_appear_snake();
@@ -933,7 +933,7 @@ int main () {
 	_t_load_dialogue();
 	_t_load_chance();
 	_t_load_settings();
-	_t_load_open_icon_card_close_part();
+	_t_load_open_icon_card_close_part();*/
     _t_reference_simple();
     return 0;
 }
