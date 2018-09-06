@@ -872,6 +872,57 @@ static void _t_load_open_icon_card_close_part () {
     assert(paw->root().toString() == correct);
 }
 
+static void _t_reference_simple () {
+    cout << "_t_reference_simple" << endl;
+#if _WINDOWS
+    auto settings = _loadPaw("../../paw/settings.app");
+#else
+    auto settings = _loadPaw("../paw/settings.app");
+#endif
+    assert(settings != null);
+    
+#if _WINDOWS
+    auto obj_shell = _loadPaw("../../paw/obj.shell");
+#else
+    auto obj_shell = _loadPaw("../paw/obj.shell");
+#endif
+    assert(obj_shell != null);
+
+#if _WINDOWS
+    auto snake = _loadPaw("../../paw/boss_appear_snake.obj");
+#else
+    auto snake = _loadPaw("../paw/boss_appear_snake.obj");
+#endif
+    assert(snake != null);
+
+
+    PawPrint paw;
+    paw.beginMap();
+        paw.pushKey("ReferenceTest");
+        paw.beginMap();
+            paw.pushKey("boss");
+            paw.beginMap();
+                paw.pushKey("appear");
+                paw.beginMap();
+                    paw.pushKey("snake");
+                    paw.pushReference(snake->root());
+                paw.endMap();
+            paw.endMap();
+
+            paw.pushKey("settings");
+            paw.pushReference(settings->root());
+
+            paw.pushKey("obj");
+            paw.beginMap();
+                paw.pushKey("shell");
+                paw.pushReference(obj_shell->root());
+            paw.endMap();
+        paw.endMap();
+    paw.endMap();
+
+    cout << paw.root().toString() << endl;
+}
+
 int main () {
     _t_basic();
     _t_loadParsingTree();
@@ -883,5 +934,6 @@ int main () {
 	_t_load_chance();
 	_t_load_settings();
 	_t_load_open_icon_card_close_part();
+    _t_reference_simple();
     return 0;
 }
